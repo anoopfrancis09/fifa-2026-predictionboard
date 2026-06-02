@@ -63,7 +63,7 @@ export function LeaderboardPage() {
               <thead>
                 <tr>
                   <th>User</th>
-                  <th>Remaining coins</th>
+                  {/* <th>Remaining coins</th> */}
                   <th>Owing</th>
                   <th>Total balance</th>
                 </tr>
@@ -72,7 +72,7 @@ export function LeaderboardPage() {
                 {rows.map((row) => (
                   <tr key={row.user_id} className={row.is_me ? 'me-row' : ''}>
                     <td>{row.username}{row.is_me ? ' (you)' : ''}</td>
-                    <td className="coin-balance">{formatCoins(row.balance)} coins</td>
+                    {/* <td className="coin-balance">{formatCoins(row.balance)} coins</td> */}
                     <td className={owingTone(row.owing_amount)}>{formatCoins(row.owing_amount)} coins</td>
                     <td className="coin-balance">{formatCoins(row.total_balance)} coins</td>
                   </tr>

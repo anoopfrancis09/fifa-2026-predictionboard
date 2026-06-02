@@ -16,7 +16,7 @@ A Vite + React + TypeScript app using Supabase for auth, database, row-level sec
 - Winners receive `stake × selected result weight`.
 - Results page shows all predictors and their selected result after the match is finished.
 - Money is masked from other users; users can see their own stake, payout and net only. Admins can see all money columns.
-- Leaderboard tab shows all users sorted by adjusted total balance in descending order, including remaining coins and net owing.
+- Leaderboard tab shows all users sorted by adjusted total balance in descending order, including remaining coins and net owing. Unfinished match stakes are added back so only finished match results affect the ranked total.
 - Borrow tab lets users request coins from another user and return outstanding borrowed coins later. Approved requests transfer coins and repayments transfer them back.
 
 ## Payout rule used
@@ -40,7 +40,7 @@ Only the original stake is deducted when the user places a prediction. Losing us
 1. Create a new Supabase project.
 2. Open **SQL Editor**.
 3. Paste and run `supabase/schema.sql`.
-4. Run any migration files you need, such as `supabase/leaderboard-migration.sql`, `supabase/borrow-coins-migration.sql`, `supabase/borrow-repayment-migration.sql`, and then `supabase/leaderboard-net-owing-migration.sql`.
+4. Run any migration files you need, such as `supabase/leaderboard-migration.sql`, `supabase/borrow-coins-migration.sql`, `supabase/borrow-return-update-only.sql`, and then `supabase/leaderboard-finished-matches-only-update.sql`.
 5. Go to **Authentication → Providers → Email** and disable email confirmation for this private username/password app.
 6. Copy your project URL and anon key into `.env.local`:
 

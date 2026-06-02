@@ -4,9 +4,10 @@ import { useAuth } from './context/AuthContext';
 import { AdminPage } from './pages/AdminPage';
 import { AuthPage } from './pages/AuthPage';
 import { Dashboard } from './pages/Dashboard';
+import { LeaderboardPage } from './pages/LeaderboardPage';
 import { ResultsPage } from './pages/ResultsPage';
 
-type Tab = 'matches' | 'results' | 'admin';
+type Tab = 'matches' | 'leaderboard' | 'results' | 'admin';
 
 export default function App() {
   const { session, profile, loading } = useAuth();
@@ -34,6 +35,7 @@ export default function App() {
   return (
     <Layout activeTab={tab} onTabChange={setTab}>
       {tab === 'matches' && <Dashboard />}
+      {tab === 'leaderboard' && <LeaderboardPage />}
       {tab === 'results' && <ResultsPage />}
       {tab === 'admin' && <AdminPage />}
     </Layout>

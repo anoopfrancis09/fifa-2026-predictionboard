@@ -51,3 +51,10 @@ export interface MatchResultRow {
   net_amount: number | null;
   is_me: boolean;
 }
+
+export interface LeaderboardRow {
+  user_id: string;
+  username: string;
+  balance: number;
+  is_me: boolean;
+}

@@ -16,6 +16,7 @@ A Vite + React + TypeScript app using Supabase for auth, database, row-level sec
 - Winners receive `stake × selected result weight`.
 - Results page shows all predictors and their selected result after the match is finished.
 - Money is masked from other users; users can see their own stake, payout and net only. Admins can see all money columns.
+- Leaderboard tab shows all users sorted by remaining balance in ascending order.
 
 ## Payout rule used
 
@@ -78,6 +79,7 @@ The app uses these RPCs from `supabase/schema.sql`:
 - `public.admin_update_match(p_match_id uuid, p_team_a text, p_team_b text, p_team_a_weight numeric, p_draw_weight numeric, p_team_b_weight numeric, p_match_time timestamptz)`
 - `public.admin_delete_match(p_match_id uuid)`
 - `public.get_match_results(p_match_id uuid)`
+- `public.get_leaderboard()`
 
 These functions enforce the core rules in the database, not only in the React UI.
 

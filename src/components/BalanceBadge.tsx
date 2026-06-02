@@ -1,10 +1,14 @@
-import { money } from '../lib/format';
-
-export function BalanceBadge({ balance }: { balance: number }) {
+export function BalanceBadge({ balance, owingBalance }: { balance: number; owingBalance: number }) {
   return (
     <div className="balance-badge" title="Remaining prediction balance">
-      <span>Balance</span>
-      <strong>{balance + ' coins'}</strong>
+      <div>
+        <span>Balance</span>
+        <strong>{balance + ' coins'}</strong>
+      </div>
+      <div>
+        <span>Owing</span>
+        <strong>{owingBalance + ' coins'}</strong>
+      </div>
     </div>
   );
 }

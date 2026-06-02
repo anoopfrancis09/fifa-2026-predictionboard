@@ -17,6 +17,7 @@ A Vite + React + TypeScript app using Supabase for auth, database, row-level sec
 - Results page shows all predictors and their selected result after the match is finished.
 - Money is masked from other users; users can see their own stake, payout and net only. Admins can see all money columns.
 - Leaderboard tab shows all users sorted by remaining balance in ascending order.
+- Borrow tab lets users request coins from another user. Approved requests transfer coins and increase the borrower's owing balance.
 
 ## Payout rule used
 
@@ -39,8 +40,9 @@ Only the original stake is deducted when the user places a prediction. Losing us
 1. Create a new Supabase project.
 2. Open **SQL Editor**.
 3. Paste and run `supabase/schema.sql`.
-4. Go to **Authentication → Providers → Email** and disable email confirmation for this private username/password app.
-5. Copy your project URL and anon key into `.env.local`:
+4. Run any migration files you need, such as `supabase/leaderboard-migration.sql` and `supabase/borrow-coins-migration.sql`.
+5. Go to **Authentication → Providers → Email** and disable email confirmation for this private username/password app.
+6. Copy your project URL and anon key into `.env.local`:
 
 ```bash
 cp .env.example .env.local
@@ -51,7 +53,7 @@ VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 ```
 
-6. Start the app:
+7. Start the app:
 
 ```bash
 npm install
@@ -72,7 +74,7 @@ Log out and back in. The Admin tab should appear.
 
 ## Main Supabase RPCs
 
-The app uses these RPCs from `supabase/schema.sql`:
+The app uses these RPCs from `supabase/schema.sql` and the migration files:
 
 - `public.place_prediction(p_match_id uuid, p_choice prediction_choice, p_amount numeric)`
 - `public.finish_match(p_match_id uuid, p_result prediction_choice)`
@@ -80,6 +82,11 @@ The app uses these RPCs from `supabase/schema.sql`:
 - `public.admin_delete_match(p_match_id uuid)`
 - `public.get_match_results(p_match_id uuid)`
 - `public.get_leaderboard()`
+- `public.get_borrow_users()`
+- `public.get_coin_borrow_requests()`
+- `public.request_coin_borrow(p_lender_id uuid, p_amount numeric)`
+- `public.approve_coin_borrow_request(p_request_id uuid)`
+- `public.decline_coin_borrow_request(p_request_id uuid)`
 
 These functions enforce the core rules in the database, not only in the React UI.
 

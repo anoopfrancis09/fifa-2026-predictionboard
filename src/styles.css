@@ -282,12 +282,18 @@ input:focus, select:focus {
 
 .balance-badge {
   display: grid;
-  gap: 0.1rem;
-  min-width: 130px;
+  grid-template-columns: repeat(2, auto);
+  gap: 0.8rem;
+  min-width: 220px;
   padding: 0.55rem 0.8rem;
   border-radius: 18px;
   background: rgba(255,255,255,0.14);
   border: 1px solid rgba(255,255,255,0.22);
+}
+
+.balance-badge div {
+  display: grid;
+  gap: 0.1rem;
 }
 
 .balance-badge span {
@@ -505,6 +511,12 @@ input:focus, select:focus {
   gap: 1.2rem;
 }
 
+.borrow-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) 1fr;
+  gap: 1.2rem;
+}
+
 .panel-card {
   padding: 1.4rem;
 }
@@ -532,6 +544,57 @@ input:focus, select:focus {
   display: block;
   color: var(--muted);
   margin-top: 0.2rem;
+}
+
+.borrow-request-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.borrow-request-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  gap: 0.8rem;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 0.85rem;
+}
+
+.borrow-request-row span {
+  display: block;
+  color: var(--muted);
+  margin-top: 0.2rem;
+}
+
+.borrow-history {
+  border-top: 1px solid var(--line);
+  margin-top: 1.3rem;
+  padding-top: 1rem;
+}
+
+.borrow-status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.borrow-status.pending {
+  background: rgba(249,199,79,0.2);
+  color: #8a5d00;
+}
+
+.borrow-status.completed {
+  background: rgba(24,179,123,0.15);
+  color: var(--green-dark);
+}
+
+.borrow-status.declined {
+  background: rgba(217,4,41,0.1);
+  color: var(--red);
 }
 
 .finished-summary {
@@ -614,7 +677,7 @@ tr:last-child td {
 }
 
 @media (max-width: 860px) {
-  .auth-panel, .admin-layout, .results-layout {
+  .auth-panel, .admin-layout, .borrow-layout, .results-layout {
     grid-template-columns: 1fr;
   }
 
@@ -636,7 +699,7 @@ tr:last-child td {
     flex-direction: column;
   }
 
-  .admin-match-row {
+  .admin-match-row, .borrow-request-row {
     grid-template-columns: 1fr;
   }
 }
@@ -653,6 +716,11 @@ tr:last-child td {
 
   .tabs button {
     flex: 1;
+  }
+
+  .balance-badge {
+    grid-template-columns: 1fr;
+    min-width: 160px;
   }
 }
 

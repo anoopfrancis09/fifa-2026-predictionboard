@@ -7,6 +7,7 @@ export interface Profile {
   username: string;
   role: ProfileRole;
   balance: number;
+  owing_balance: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -57,4 +58,26 @@ export interface LeaderboardRow {
   username: string;
   balance: number;
   is_me: boolean;
+}
+
+export interface BorrowUser {
+  user_id: string;
+  username: string;
+  balance: number;
+}
+
+export type BorrowRequestStatus = 'pending' | 'completed' | 'declined';
+
+export interface BorrowRequestRow {
+  request_id: string;
+  borrower_id: string;
+  borrower_username: string;
+  lender_id: string;
+  lender_username: string;
+  amount: number;
+  status: BorrowRequestStatus;
+  requested_at: string;
+  responded_at: string | null;
+  is_incoming: boolean;
+  is_outgoing: boolean;
 }

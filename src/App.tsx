@@ -3,11 +3,12 @@ import { Layout } from './components/Layout';
 import { useAuth } from './context/AuthContext';
 import { AdminPage } from './pages/AdminPage';
 import { AuthPage } from './pages/AuthPage';
+import { BorrowCoinsPage } from './pages/BorrowCoinsPage';
 import { Dashboard } from './pages/Dashboard';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { ResultsPage } from './pages/ResultsPage';
 
-type Tab = 'matches' | 'leaderboard' | 'results' | 'admin';
+type Tab = 'matches' | 'leaderboard' | 'borrow' | 'results' | 'admin';
 
 export default function App() {
   const { session, profile, loading } = useAuth();
@@ -36,6 +37,7 @@ export default function App() {
     <Layout activeTab={tab} onTabChange={setTab}>
       {tab === 'matches' && <Dashboard />}
       {tab === 'leaderboard' && <LeaderboardPage />}
+      {tab === 'borrow' && <BorrowCoinsPage />}
       {tab === 'results' && <ResultsPage />}
       {tab === 'admin' && <AdminPage />}
     </Layout>

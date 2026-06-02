@@ -15,6 +15,9 @@ export interface Match {
   id: string;
   team_a: string;
   team_b: string;
+  team_a_weight: number;
+  draw_weight: number;
+  team_b_weight: number;
   match_time: string;
   status: MatchStatus;
   result: PredictionChoice | null;
@@ -32,6 +35,7 @@ export interface Prediction {
   amount: number;
   payout_amount: number;
   net_amount: number;
+  result_weight: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -41,6 +45,7 @@ export interface MatchResultRow {
   user_id: string;
   username: string;
   choice: PredictionChoice;
+  choice_weight: number;
   amount: number | null;
   payout_amount: number | null;
   net_amount: number | null;

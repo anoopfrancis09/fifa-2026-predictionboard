@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { choiceLabel, closeTime, formatDateTime, isBoardClosed, money } from '../lib/format';
+import { choiceLabel, choiceWeight, closeTime, formatDateTime, isBoardClosed, money, weightLabel } from '../lib/format';
 import type { Match, Prediction, PredictionChoice } from '../types';
 
 const choices: PredictionChoice[] = ['team_a', 'draw', 'team_b'];
@@ -18,6 +18,9 @@ export function MatchCard({ match, prediction, onChanged }: { match: Match; pred
   const currentStake = prediction?.amount ?? 0;
   const availableForThisMatch = useMemo(() => (profile?.balance ?? 0) + currentStake, [profile?.balance, currentStake]);
   const numericAmount = Number(amount || 0);
+  const selectedWeight = choiceWeight(choice, match);
+  const possibleReturn = numericAmount > 0 ? numericAmount * selectedWeight : 0;
+  const possibleProfit = possibleReturn - numericAmount;
   const insufficientBalance = numericAmount > availableForThisMatch;
 
   async function submitPrediction() {
@@ -67,12 +70,18 @@ export function MatchCard({ match, prediction, onChanged }: { match: Match; pred
         <strong>{match.team_b}</strong>
       </div>
 
+      <div className="weight-strip" aria-label="Outcome weights">
+        <span>{match.team_a}: {weightLabel(match.team_a_weight)}</span>
+        <span>Draw: {weightLabel(match.draw_weight)}</span>
+        <span>{match.team_b}: {weightLabel(match.team_b_weight)}</span>
+      </div>
+
       <p className="close-note">Board closes at {formatDateTime(closeTime(match))}</p>
 
       {prediction && (
         <div className="my-prediction">
           <span>Your prediction</span>
-          <strong>{choiceLabel(prediction.choice, match)} • {money(prediction.amount)}</strong>
+          <strong>{choiceLabel(prediction.choice, match)} • {money(prediction.amount)} • {weightLabel(choiceWeight(prediction.choice, match))}</strong>
         </div>
       )}
 
@@ -92,7 +101,8 @@ export function MatchCard({ match, prediction, onChanged }: { match: Match; pred
                 className={choice === nextChoice ? 'choice active' : 'choice'}
                 onClick={() => setChoice(nextChoice)}
               >
-                {choiceLabel(nextChoice, match)}
+                <span>{choiceLabel(nextChoice, match)}</span>
+                <small>{weightLabel(choiceWeight(nextChoice, match))}</small>
               </button>
             ))}
           </div>
@@ -109,6 +119,12 @@ export function MatchCard({ match, prediction, onChanged }: { match: Match; pred
               placeholder="e.g. 10"
             />
           </label>
+
+          {numericAmount > 0 && (
+            <div className="payout-preview">
+              If correct: return {money(possibleReturn)} including {money(possibleProfit)} profit. If wrong: lose {money(numericAmount)} only.
+            </div>
+          )}
 
           <div className="form-footer">
             <span className={insufficientBalance ? 'negative' : 'muted-text'}>

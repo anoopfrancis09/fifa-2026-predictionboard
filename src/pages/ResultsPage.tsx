@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { choiceLabel, formatDateTime, money, resultTone } from '../lib/format';
+import { choiceLabel, formatDateTime, money, resultTone, weightLabel } from '../lib/format';
 import type { Match, MatchResultRow } from '../types';
 
 export function ResultsPage() {
@@ -112,6 +112,7 @@ export function ResultsPage() {
                   <tr>
                     <th>User</th>
                     <th>Prediction</th>
+                    <th>Weight</th>
                     <th>Stake</th>
                     <th>Payout</th>
                     <th>Net</th>
@@ -122,6 +123,7 @@ export function ResultsPage() {
                     <tr key={row.prediction_id} className={row.is_me ? 'me-row' : ''}>
                       <td>{row.username}{row.is_me ? ' (you)' : ''}</td>
                       <td>{selectedMatch ? choiceLabel(row.choice, selectedMatch) : row.choice}</td>
+                      <td>{weightLabel(row.choice_weight)}</td>
                       <td>{money(row.amount)}</td>
                       <td>{money(row.payout_amount)}</td>
                       <td className={resultTone(row.net_amount)}>{money(row.net_amount)}</td>

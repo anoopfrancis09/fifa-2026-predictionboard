@@ -37,6 +37,23 @@ export function choiceLabel(choice: PredictionChoice, match: Pick<Match, 'team_a
   }
 }
 
+
+export function choiceWeight(choice: PredictionChoice, match: Pick<Match, 'team_a_weight' | 'team_b_weight' | 'draw_weight'>) {
+  switch (choice) {
+    case 'team_a':
+      return Number(match.team_a_weight ?? 1);
+    case 'team_b':
+      return Number(match.team_b_weight ?? 1);
+    case 'draw':
+      return Number(match.draw_weight ?? 1);
+  }
+}
+
+export function weightLabel(value: number | null | undefined) {
+  const numericValue = Number(value ?? 1);
+  return `${numericValue.toFixed(2).replace(/\.00$/, '')}x`;
+}
+
 export function resultTone(value: number | null | undefined) {
   if (value === null || value === undefined) return 'muted';
   if (value > 0) return 'positive';

@@ -22,6 +22,9 @@ create table public.matches (
   id uuid primary key default gen_random_uuid(),
   team_a text not null check (length(trim(team_a)) > 0),
   team_b text not null check (length(trim(team_b)) > 0),
+  team_a_weight numeric(8,2) not null default 1.00 check (team_a_weight >= 1),
+  draw_weight numeric(8,2) not null default 1.00 check (draw_weight >= 1),
+  team_b_weight numeric(8,2) not null default 1.00 check (team_b_weight >= 1),
   match_time timestamptz not null,
   status public.match_status not null default 'upcoming',
   result public.prediction_choice,
@@ -45,6 +48,7 @@ create table public.predictions (
   amount numeric(12,2) not null check (amount > 0),
   payout_amount numeric(12,2) not null default 0 check (payout_amount >= 0),
   net_amount numeric(12,2) not null default 0,
+  result_weight numeric(8,2),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (match_id, user_id)
@@ -298,8 +302,9 @@ $$;
 
 -- 8) Admin settles a match. Payout rule:
 --    - stakes are deducted when predictions are placed
---    - winners get their own stake back plus a proportional share of all losing stakes
---    - if nobody predicted correctly, nobody receives a payout
+--    - winners receive amount × the configured weight for the winning result
+--    - winner net profit is payout minus their original stake
+--    - losers receive no payout and only lose their original stake
 create or replace function public.finish_match(
   p_match_id uuid,
   p_result public.prediction_choice
@@ -311,8 +316,7 @@ set search_path = public
 as $$
 declare
   v_match public.matches%rowtype;
-  v_total_winning_stake numeric(12,2);
-  v_losing_pool numeric(12,2);
+  v_winning_weight numeric(8,2);
   v_balance numeric(12,2);
   v_rec record;
 begin
@@ -337,57 +341,48 @@ begin
     raise exception 'This match has already been finished.';
   end if;
 
+  v_winning_weight := case p_result
+    when 'team_a'::public.prediction_choice then v_match.team_a_weight
+    when 'team_b'::public.prediction_choice then v_match.team_b_weight
+    when 'draw'::public.prediction_choice then v_match.draw_weight
+  end;
+
   update public.matches
   set status = 'finished'::public.match_status,
       result = p_result,
       finished_at = now()
   where id = p_match_id;
 
-  select coalesce(sum(amount), 0)::numeric(12,2)
-  into v_total_winning_stake
-  from public.predictions
-  where match_id = p_match_id
-    and choice = p_result;
+  update public.predictions
+  set payout_amount = case
+        when choice = p_result then round(amount * v_winning_weight, 2)
+        else 0
+      end,
+      net_amount = case
+        when choice = p_result then round((amount * v_winning_weight) - amount, 2)
+        else round(-amount, 2)
+      end,
+      result_weight = case
+        when choice = p_result then v_winning_weight
+        else null
+      end
+  where match_id = p_match_id;
 
-  select coalesce(sum(amount), 0)::numeric(12,2)
-  into v_losing_pool
-  from public.predictions
-  where match_id = p_match_id
-    and choice <> p_result;
+  for v_rec in
+    select user_id, payout_amount
+    from public.predictions
+    where match_id = p_match_id
+      and choice = p_result
+      and payout_amount > 0
+  loop
+    update public.profiles
+    set balance = round(balance + v_rec.payout_amount, 2)
+    where id = v_rec.user_id
+    returning balance into v_balance;
 
-  if v_total_winning_stake > 0 then
-    update public.predictions
-    set payout_amount = case
-          when choice = p_result then round(amount + ((amount / v_total_winning_stake) * v_losing_pool), 2)
-          else 0
-        end,
-        net_amount = case
-          when choice = p_result then round((amount / v_total_winning_stake) * v_losing_pool, 2)
-          else round(-amount, 2)
-        end
-    where match_id = p_match_id;
-
-    for v_rec in
-      select user_id, payout_amount
-      from public.predictions
-      where match_id = p_match_id
-        and choice = p_result
-        and payout_amount > 0
-    loop
-      update public.profiles
-      set balance = round(balance + v_rec.payout_amount, 2)
-      where id = v_rec.user_id
-      returning balance into v_balance;
-
-      insert into public.wallet_transactions (user_id, match_id, type, amount, balance_after, notes)
-      values (v_rec.user_id, p_match_id, 'payout', v_rec.payout_amount, v_balance, 'Winning payout');
-    end loop;
-  else
-    update public.predictions
-    set payout_amount = 0,
-        net_amount = round(-amount, 2)
-    where match_id = p_match_id;
-  end if;
+    insert into public.wallet_transactions (user_id, match_id, type, amount, balance_after, notes)
+    values (v_rec.user_id, p_match_id, 'payout', v_rec.payout_amount, v_balance, 'Winning payout using weight ' || v_winning_weight::text);
+  end loop;
 
   for v_rec in
     select user_id, amount
@@ -412,6 +407,7 @@ returns table (
   user_id uuid,
   username text,
   choice public.prediction_choice,
+  choice_weight numeric,
   amount numeric,
   payout_amount numeric,
   net_amount numeric,
@@ -444,12 +440,18 @@ begin
     p.user_id,
     pr.username,
     p.choice,
+    case p.choice
+      when 'team_a'::public.prediction_choice then m.team_a_weight
+      when 'team_b'::public.prediction_choice then m.team_b_weight
+      when 'draw'::public.prediction_choice then m.draw_weight
+    end as choice_weight,
     case when p.user_id = auth.uid() or v_is_admin then p.amount else null end as amount,
     case when p.user_id = auth.uid() or v_is_admin then p.payout_amount else null end as payout_amount,
     case when p.user_id = auth.uid() or v_is_admin then p.net_amount else null end as net_amount,
     (p.user_id = auth.uid()) as is_me
   from public.predictions p
   join public.profiles pr on pr.id = p.user_id
+  join public.matches m on m.id = p.match_id
   where p.match_id = p_match_id
   order by pr.username;
 end;
@@ -474,7 +476,7 @@ grant execute on function public.is_admin() to authenticated;
 -- update public.profiles set role = 'admin' where username = 'your_username';
 
 -- Optional seed matches:
--- insert into public.matches (team_a, team_b, match_time)
+-- insert into public.matches (team_a, team_b, team_a_weight, draw_weight, team_b_weight, match_time)
 -- values
--- ('Australia', 'New Zealand', '2026-06-11 20:00:00+10'),
--- ('Brazil', 'France', '2026-06-12 20:00:00+10');
+-- ('Australia', 'New Zealand', 2.10, 3.00, 2.40, '2026-06-11 20:00:00+10'),
+-- ('Brazil', 'France', 2.50, 3.20, 2.80, '2026-06-12 20:00:00+10');

@@ -7,30 +7,40 @@ A Vite + React + TypeScript app using Supabase for auth, database, row-level sec
 - Username/password login flow.
 - Supabase Auth is used behind the scenes with a generated private email per username.
 - Every user starts with a $100 balance.
-- Admins can add upcoming matches with date/time.
+- Admins can add upcoming matches with date/time and result weights.
+- Admins can set separate weights for Team A win, Draw, and Team B win.
 - Users can place or update one prediction per match until 15 minutes before kick-off.
 - Prediction options are mutually exclusive: Team A win, Draw, Team B win.
 - Stakes are deducted when a prediction is placed.
 - Admins settle matches using the Admin page.
-- Winners receive their stake back plus a proportional share of losing stakes.
+- Winning payout is calculated using the configured weight for the winning result.
+- Losing users only lose the amount they bid.
 - Results page shows all predictors and their selected result after the match is finished.
 - Money is masked from other users; users can see their own stake, payout and net only. Admins can see all money columns.
 
 ## Payout rule used
 
-Because there can be multiple correct predictors, the app uses this rule:
+The admin sets weights when adding a match. Example:
 
 ```text
-winning payout = user's stake + (user's stake / total winning stakes) × total losing stakes
-net amount = payout - user's original stake
+Argentina win: 2.80x
+Draw: 3.00x
+Brazil win: 2.50x
 ```
 
-Example: if two correct users bid $10 and $30, and losing stakes total $80:
+When the match is finished:
 
-- $10 winner gets $10 + 25% of $80 = $30 payout, $20 net profit.
-- $30 winner gets $30 + 75% of $80 = $90 payout, $60 net profit.
+```text
+winning payout = user's bid × winning result weight
+net amount = winning payout - user's original bid
+```
 
-If nobody predicts correctly, no payout is made.
+Examples:
+
+- User bids $10 on Brazil at 2.50x and Brazil wins: payout is $25, net profit is $15.
+- User bids $10 on Argentina and Brazil wins: payout is $0, net is -$10.
+
+The user's stake is deducted when they place the bid. If they win, the full payout is added back to their balance. If they lose, nothing more is deducted.
 
 ## Supabase setup
 
@@ -55,6 +65,16 @@ VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 npm install
 npm run dev
 ```
+
+## Updating an existing database
+
+If you already ran an older version of the schema, run this file in Supabase SQL Editor instead of re-running the whole schema:
+
+```text
+supabase/add-weights-migration.sql
+```
+
+It adds the weight columns and replaces the payout functions.
 
 ## Make the first admin
 

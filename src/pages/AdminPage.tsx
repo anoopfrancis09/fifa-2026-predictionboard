@@ -2,7 +2,7 @@ import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { choiceLabel, formatDateTime, weightLabel } from '../lib/format';
-import type { Match, PredictionChoice } from '../types';
+import type { BorrowRequestRow, Match, PredictionChoice } from '../types';
 
 function toLocalInputValue(date: Date) {
   const offset = date.getTimezoneOffset();
@@ -18,6 +18,13 @@ function parseWeight(value: string, label: string) {
   return Number(weight.toFixed(2));
 }
 
+function formatCoins(value: number) {
+  return Number(value).toLocaleString('en-AU', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 const defaultMatchTime = () => toLocalInputValue(new Date(Date.now() + 24 * 60 * 60 * 1000));
 
 export function AdminPage() {
@@ -30,23 +37,28 @@ export function AdminPage() {
   const [matchTime, setMatchTime] = useState(defaultMatchTime());
   const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
+  const [borrowRequests, setBorrowRequests] = useState<BorrowRequestRow[]>([]);
   const [resultByMatch, setResultByMatch] = useState<Record<string, PredictionChoice>>({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const { data, error: matchesError } = await supabase
-      .from('matches')
-      .select('*')
-      .order('match_time', { ascending: true });
+    const [{ data: matchesData, error: matchesError }, { data: borrowData, error: borrowError }] = await Promise.all([
+      supabase
+        .from('matches')
+        .select('*')
+        .order('match_time', { ascending: true }),
+      supabase.rpc('get_coin_borrow_requests'),
+    ]);
 
-    if (matchesError) {
-      setError(matchesError.message);
+    if (matchesError || borrowError) {
+      setError(matchesError?.message ?? borrowError?.message ?? 'Could not load admin data.');
       return;
     }
 
-    setMatches((data ?? []) as Match[]);
+    setMatches((matchesData ?? []) as Match[]);
+    setBorrowRequests((borrowData ?? []) as BorrowRequestRow[]);
   }, []);
 
   useEffect(() => {
@@ -323,6 +335,42 @@ export function AdminPage() {
             ))}
           </div>
         )}
+
+        <div className="finished-summary">
+          <h3>Borrowing history</h3>
+          {borrowRequests.length === 0 ? (
+            <p className="muted-text">No borrow requests yet.</p>
+          ) : (
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Borrower</th>
+                    <th>Lender</th>
+                    <th>Amount</th>
+                    <th>Outstanding</th>
+                    <th>Status</th>
+                    <th>Requested</th>
+                    <th>Returned</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {borrowRequests.map((request) => (
+                    <tr key={request.request_id}>
+                      <td>{request.borrower_username}</td>
+                      <td>{request.lender_username}</td>
+                      <td className="coin-balance">{formatCoins(request.amount)} coins</td>
+                      <td className={request.outstanding_amount > 0 ? 'negative' : 'neutral'}>{formatCoins(request.outstanding_amount)} coins</td>
+                      <td><span className={`borrow-status ${request.status}`}>{request.status}</span></td>
+                      <td>{formatDateTime(request.requested_at)}</td>
+                      <td>{request.repaid_at ? formatDateTime(request.repaid_at) : 'Not returned'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );

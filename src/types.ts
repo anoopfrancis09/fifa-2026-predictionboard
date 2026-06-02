@@ -77,9 +77,12 @@ export interface BorrowRequestRow {
   lender_id: string;
   lender_username: string;
   amount: number;
+  repaid_amount: number;
+  outstanding_amount: number;
   status: BorrowRequestStatus;
   requested_at: string;
   responded_at: string | null;
+  repaid_at: string | null;
   is_incoming: boolean;
   is_outgoing: boolean;
 }

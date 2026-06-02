@@ -38,6 +38,10 @@ export function BorrowCoinsPage() {
     () => requests.filter((request) => request.is_incoming && request.status === 'pending'),
     [requests]
   );
+  const outstandingOutgoing = useMemo(
+    () => requests.filter((request) => request.is_outgoing && request.status === 'completed' && request.outstanding_amount > 0),
+    [requests]
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -119,6 +123,28 @@ export function BorrowCoinsPage() {
     }
   }
 
+  async function returnBorrowedCoins(requestId: string) {
+    setActionRequestId(requestId);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const { error: repayError } = await supabase.rpc('repay_coin_borrow_request', {
+        p_request_id: requestId,
+      });
+
+      if (repayError) throw repayError;
+
+      setMessage('Borrowed coins returned.');
+      await refreshProfile();
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not return borrowed coins.');
+    } finally {
+      setActionRequestId(null);
+    }
+  }
+
   if (loading) return <p className="page-message">Loading borrow requests…</p>;
 
   return (
@@ -165,44 +191,76 @@ export function BorrowCoinsPage() {
       <div className="panel-card wide">
         <div className="section-heading compact">
           <div>
-            <p className="eyebrow">Incoming</p>
-            <h2>Requests from others</h2>
+            <p className="eyebrow">Return coins</p>
+            <h2>Outstanding borrowed coins</h2>
           </div>
           <button className="ghost-button dark" type="button" onClick={load}>Refresh</button>
         </div>
 
-        {pendingIncoming.length === 0 ? (
-          <p className="muted-text">No pending requests for you.</p>
+        {outstandingOutgoing.length === 0 ? (
+          <p className="muted-text">No borrowed coins to return.</p>
         ) : (
           <div className="borrow-request-list">
-            {pendingIncoming.map((request) => (
+            {outstandingOutgoing.map((request) => (
               <div className="borrow-request-row" key={request.request_id}>
                 <div>
-                  <strong>{request.borrower_username}</strong>
-                  <span>Requested {formatCoins(request.amount)} coins on {formatDateTime(request.requested_at)}</span>
+                  <strong>{request.lender_username}</strong>
+                  <span>Owing {formatCoins(request.outstanding_amount)} coins from {formatCoins(request.amount)} borrowed.</span>
                 </div>
-                <div className="admin-actions">
-                  <button
-                    className="ghost-button dark"
-                    type="button"
-                    onClick={() => handleRequest(request.request_id, 'decline')}
-                    disabled={actionRequestId === request.request_id}
-                  >
-                    Decline
-                  </button>
-                  <button
-                    className="primary-button"
-                    type="button"
-                    onClick={() => handleRequest(request.request_id, 'approve')}
-                    disabled={actionRequestId === request.request_id}
-                  >
-                    Approve
-                  </button>
-                </div>
+                <button
+                  className="primary-button"
+                  type="button"
+                  onClick={() => returnBorrowedCoins(request.request_id)}
+                  disabled={actionRequestId === request.request_id}
+                >
+                  Return coins
+                </button>
               </div>
             ))}
           </div>
         )}
+
+        <div className="borrow-history">
+          <div className="section-heading compact">
+            <div>
+              <p className="eyebrow">Incoming</p>
+              <h2>Requests from others</h2>
+            </div>
+          </div>
+
+          {pendingIncoming.length === 0 ? (
+            <p className="muted-text">No pending requests for you.</p>
+          ) : (
+            <div className="borrow-request-list">
+              {pendingIncoming.map((request) => (
+                <div className="borrow-request-row" key={request.request_id}>
+                  <div>
+                    <strong>{request.borrower_username}</strong>
+                    <span>Requested {formatCoins(request.amount)} coins on {formatDateTime(request.requested_at)}</span>
+                  </div>
+                  <div className="admin-actions">
+                    <button
+                      className="ghost-button dark"
+                      type="button"
+                      onClick={() => handleRequest(request.request_id, 'decline')}
+                      disabled={actionRequestId === request.request_id}
+                    >
+                      Decline
+                    </button>
+                    <button
+                      className="primary-button"
+                      type="button"
+                      onClick={() => handleRequest(request.request_id, 'approve')}
+                      disabled={actionRequestId === request.request_id}
+                    >
+                      Approve
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="borrow-history">
           <h3>Borrow history</h3>
@@ -216,6 +274,7 @@ export function BorrowCoinsPage() {
                     <th>Borrower</th>
                     <th>Lender</th>
                     <th>Amount</th>
+                    <th>Outstanding</th>
                     <th>Status</th>
                     <th>Requested</th>
                   </tr>
@@ -226,6 +285,7 @@ export function BorrowCoinsPage() {
                       <td>{request.borrower_username}{request.is_outgoing ? ' (you)' : ''}</td>
                       <td>{request.lender_username}{request.is_incoming ? ' (you)' : ''}</td>
                       <td className="coin-balance">{formatCoins(request.amount)} coins</td>
+                      <td className={request.outstanding_amount > 0 ? 'negative' : 'neutral'}>{formatCoins(request.outstanding_amount)} coins</td>
                       <td>
                         <span className={`borrow-status ${request.status}`}>{statusLabel(request.status)}</span>
                       </td>

@@ -18,6 +18,8 @@ function parseWeight(value: string, label: string) {
   return Number(weight.toFixed(2));
 }
 
+const defaultMatchTime = () => toLocalInputValue(new Date(Date.now() + 24 * 60 * 60 * 1000));
+
 export function AdminPage() {
   const { profile } = useAuth();
   const [teamA, setTeamA] = useState('');
@@ -25,7 +27,8 @@ export function AdminPage() {
   const [teamAWeight, setTeamAWeight] = useState('2.00');
   const [drawWeight, setDrawWeight] = useState('2.00');
   const [teamBWeight, setTeamBWeight] = useState('2.00');
-  const [matchTime, setMatchTime] = useState(toLocalInputValue(new Date(Date.now() + 24 * 60 * 60 * 1000)));
+  const [matchTime, setMatchTime] = useState(defaultMatchTime());
+  const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [resultByMatch, setResultByMatch] = useState<Record<string, PredictionChoice>>({});
   const [loading, setLoading] = useState(false);
@@ -50,7 +53,30 @@ export function AdminPage() {
     load();
   }, [load]);
 
-  async function createMatch(event: FormEvent) {
+  function resetForm() {
+    setTeamA('');
+    setTeamB('');
+    setTeamAWeight('2.00');
+    setDrawWeight('2.00');
+    setTeamBWeight('2.00');
+    setMatchTime(defaultMatchTime());
+    setEditingMatchId(null);
+  }
+
+  function startEdit(match: Match) {
+    setError(null);
+    setMessage(null);
+    setEditingMatchId(match.id);
+    setTeamA(match.team_a);
+    setTeamB(match.team_b);
+    setTeamAWeight(Number(match.team_a_weight).toFixed(2));
+    setDrawWeight(Number(match.draw_weight).toFixed(2));
+    setTeamBWeight(Number(match.team_b_weight).toFixed(2));
+    setMatchTime(toLocalInputValue(new Date(match.match_time)));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function saveMatch(event: FormEvent) {
     event.preventDefault();
     setLoading(true);
     setError(null);
@@ -59,32 +85,74 @@ export function AdminPage() {
     try {
       if (!profile || profile.role !== 'admin') throw new Error('Admin access required.');
       if (!teamA.trim() || !teamB.trim()) throw new Error('Enter both team names.');
+      if (teamA.trim().toLowerCase() === teamB.trim().toLowerCase()) throw new Error('Team names must be different.');
 
       const parsedTeamAWeight = parseWeight(teamAWeight, `${teamA.trim()} win weight`);
       const parsedDrawWeight = parseWeight(drawWeight, 'Draw weight');
       const parsedTeamBWeight = parseWeight(teamBWeight, `${teamB.trim()} win weight`);
+      const parsedMatchTime = new Date(matchTime);
 
-      const { error: insertError } = await supabase.from('matches').insert({
-        team_a: teamA.trim(),
-        team_b: teamB.trim(),
-        team_a_weight: parsedTeamAWeight,
-        draw_weight: parsedDrawWeight,
-        team_b_weight: parsedTeamBWeight,
-        match_time: new Date(matchTime).toISOString(),
-        created_by: profile.id,
-      });
+      if (Number.isNaN(parsedMatchTime.getTime())) throw new Error('Enter a valid match date and time.');
 
-      if (insertError) throw insertError;
+      if (editingMatchId) {
+        const { error: updateError } = await supabase.rpc('admin_update_match', {
+          p_match_id: editingMatchId,
+          p_team_a: teamA.trim(),
+          p_team_b: teamB.trim(),
+          p_team_a_weight: parsedTeamAWeight,
+          p_draw_weight: parsedDrawWeight,
+          p_team_b_weight: parsedTeamBWeight,
+          p_match_time: parsedMatchTime.toISOString(),
+        });
 
-      setTeamA('');
-      setTeamB('');
-      setTeamAWeight('2.00');
-      setDrawWeight('2.00');
-      setTeamBWeight('2.00');
-      setMessage('Match added.');
+        if (updateError) throw updateError;
+        setMessage('Match updated. Existing predictions will now use the updated teams/weights.');
+      } else {
+        const { error: insertError } = await supabase.from('matches').insert({
+          team_a: teamA.trim(),
+          team_b: teamB.trim(),
+          team_a_weight: parsedTeamAWeight,
+          draw_weight: parsedDrawWeight,
+          team_b_weight: parsedTeamBWeight,
+          match_time: parsedMatchTime.toISOString(),
+          created_by: profile.id,
+        });
+
+        if (insertError) throw insertError;
+        setMessage('Match added.');
+      }
+
+      resetForm();
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not add match.');
+      setError(err instanceof Error ? err.message : 'Could not save match.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function deleteMatch(match: Match) {
+    const confirmed = window.confirm(
+      `Delete ${match.team_a} vs ${match.team_b}? If users have already placed predictions, their stake will be refunded automatically.`
+    );
+    if (!confirmed) return;
+
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const { error: deleteError } = await supabase.rpc('admin_delete_match', {
+        p_match_id: match.id,
+      });
+
+      if (deleteError) throw deleteError;
+
+      if (editingMatchId === match.id) resetForm();
+      setMessage('Match deleted. Any existing stakes for that match were refunded.');
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not delete match.');
     } finally {
       setLoading(false);
     }
@@ -111,6 +179,7 @@ export function AdminPage() {
       });
 
       if (rpcError) throw rpcError;
+      if (editingMatchId === match.id) resetForm();
       setMessage('Match finished and payouts settled.');
       await load();
     } catch (err) {
@@ -129,9 +198,15 @@ export function AdminPage() {
 
   return (
     <section className="admin-layout">
-      <form className="panel-card" onSubmit={createMatch}>
+      <form className="panel-card" onSubmit={saveMatch}>
         <p className="eyebrow">Admin</p>
-        <h2>Add upcoming match</h2>
+        <h2>{editingMatchId ? 'Edit match' : 'Add upcoming match'}</h2>
+
+        {editingMatchId && (
+          <p className="warning-box compact-warning">
+            You are editing an existing upcoming match. Existing user predictions will remain, but the updated team names, match time and weights will be used.
+          </p>
+        )}
 
         <label className="field-label">
           Team A
@@ -144,43 +219,44 @@ export function AdminPage() {
         </label>
 
         <div className="weight-grid">
-          {teamA !== '' && <label className="field-label">
-            {`${teamA} win weight`}
+          <label className="field-label">
+            {`${teamA || 'Team A'} win weight`}
             <input
               type="number"
               min="1"
               step="0.01"
-              disabled={teamA == ''}
               value={teamAWeight}
+              disabled={teamA === ''}
               onChange={(event) => setTeamAWeight(event.target.value)}
               placeholder="2.80"
             />
-          </label> }
+          </label>
 
-          {teamB !== '' && <label className="field-label">
-            {`${teamB} win weight`}
+          <label className="field-label">
+            {`${teamB || 'Team B'} win weight`}
             <input
               type="number"
               min="1"
               step="0.01"
-              disabled={teamB == ''}
               value={teamBWeight}
+              disabled={teamB === ''}
               onChange={(event) => setTeamBWeight(event.target.value)}
               placeholder="2.50"
             />
-          </label>}
+          </label>
 
-          {teamA !== '' && teamB !== '' && <label className="field-label">
+          <label className="field-label">
             Draw weight
             <input
               type="number"
               min="1"
               step="0.01"
+              disabled={teamA === '' || teamB == ''}
               value={drawWeight}
               onChange={(event) => setDrawWeight(event.target.value)}
               placeholder="3.00"
             />
-          </label> }
+          </label>
         </div>
 
         <p className="muted-text small-note">Winning payout = bid amount × selected result weight. Losing users only lose their bid amount.</p>
@@ -190,7 +266,10 @@ export function AdminPage() {
           <input type="datetime-local" value={matchTime} onChange={(event) => setMatchTime(event.target.value)} />
         </label>
 
-        <button className="primary-button full-width" disabled={loading}>Add match</button>
+        <button className="primary-button full-width" disabled={loading}>{editingMatchId ? 'Update match' : 'Add match'}</button>
+        {editingMatchId && (
+          <button type="button" className="ghost-button dark full-width" disabled={loading} onClick={resetForm}>Cancel edit</button>
+        )}
         {message && <p className="success-text">{message}</p>}
         {error && <p className="error-text">{error}</p>}
       </form>
@@ -198,7 +277,7 @@ export function AdminPage() {
       <div className="panel-card wide">
         <div className="section-heading compact">
           <div>
-            <p className="eyebrow">Settle games</p>
+            <p className="eyebrow">Manage games</p>
             <h2>Upcoming matches</h2>
           </div>
           <button className="ghost-button dark" onClick={load}>Refresh</button>
@@ -226,7 +305,11 @@ export function AdminPage() {
                   <option value="draw">Draw</option>
                   <option value="team_b">{match.team_b} win</option>
                 </select>
-                <button className="primary-button" onClick={() => finishMatch(match)} disabled={loading}>Mark finished</button>
+                <div className="admin-actions">
+                  <button className="ghost-button dark" type="button" onClick={() => startEdit(match)} disabled={loading}>Edit</button>
+                  <button className="danger-button" type="button" onClick={() => deleteMatch(match)} disabled={loading}>Delete</button>
+                  <button className="primary-button" type="button" onClick={() => finishMatch(match)} disabled={loading}>Mark finished</button>
+                </div>
               </div>
             ))}
           </div>

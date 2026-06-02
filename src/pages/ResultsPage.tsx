@@ -124,9 +124,9 @@ export function ResultsPage() {
                       <td>{row.username}{row.is_me ? ' (you)' : ''}</td>
                       <td>{selectedMatch ? choiceLabel(row.choice, selectedMatch) : row.choice}</td>
                       <td>{weightLabel(row.choice_weight)}</td>
-                      <td>{money(row.amount)}</td>
-                      <td>{money(row.payout_amount)}</td>
-                      <td className={resultTone(row.net_amount)}>{money(row.net_amount)}</td>
+                      <td>{row.amount}</td>
+                      <td>{row.payout_amount}</td>
+                      <td className={resultTone(row.net_amount)}>{row.net_amount}</td>
                     </tr>
                   ))}
                 </tbody>

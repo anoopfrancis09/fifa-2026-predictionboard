@@ -31,7 +31,7 @@ export function MatchCard({ match, prediction, onChanged }: { match: Match; pred
     try {
       if (!profile) throw new Error('You must be logged in.');
       if (numericAmount <= 0) throw new Error('Enter a bid greater than $0.');
-      if (insufficientBalance) throw new Error(`You only have ${money(availableForThisMatch)} available for this match.`);
+      if (insufficientBalance) throw new Error(`You only have ${availableForThisMatch + ' coins'} available for this match.`);
 
       const { error: rpcError } = await supabase.rpc('place_prediction', {
         p_match_id: match.id,
@@ -81,7 +81,7 @@ export function MatchCard({ match, prediction, onChanged }: { match: Match; pred
       {prediction && (
         <div className="my-prediction">
           <span>Your prediction</span>
-          <strong>{choiceLabel(prediction.choice, match)} • {money(prediction.amount)} • {weightLabel(choiceWeight(prediction.choice, match))}</strong>
+          <strong>{choiceLabel(prediction.choice, match)} • {prediction.amount +' coins'} • {weightLabel(choiceWeight(prediction.choice, match))}</strong>
         </div>
       )}
 
@@ -122,13 +122,15 @@ export function MatchCard({ match, prediction, onChanged }: { match: Match; pred
 
           {numericAmount > 0 && (
             <div className="payout-preview">
-              If correct: return {money(possibleReturn)} including {money(possibleProfit)} profit. If wrong: lose {money(numericAmount)} only.
+              If correct: you will get {possibleReturn + ' coins'} including {possibleProfit + ' coins'} profit. 
+              <br />
+              If wrong: lose {numericAmount + ' coins'} only.
             </div>
           )}
 
           <div className="form-footer">
             <span className={insufficientBalance ? 'negative' : 'muted-text'}>
-              Available for this match: {money(availableForThisMatch)}
+              Available for this match: {availableForThisMatch + ' coins'}
             </span>
             <button className="primary-button" onClick={submitPrediction} disabled={saving || insufficientBalance}>
               {saving ? 'Saving…' : prediction ? 'Update bid' : 'Place bid'}

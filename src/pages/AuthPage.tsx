@@ -50,7 +50,7 @@ export function AuthPage() {
             <input
               value={username}
               onChange={(event) => setUsername(event.target.value)}
-              placeholder="username"
+              placeholder="anoop"
               autoComplete="username"
             />
           </label>

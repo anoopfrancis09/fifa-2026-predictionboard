@@ -29,9 +29,6 @@ export function Layout({ activeTab, onTabChange, children }: { activeTab: Tab; o
         <section className="hero-content">
           <p className="eyebrow">Friendly pool • $100 starting wallet • closes 15 minutes before kick-off</p>
           <h1>Predict the match, protect your balance, climb the table.</h1>
-          <p className="hero-subtitle">
-            Pick one outcome per game: team A win, draw, or team B win. Correct predictors share the losing pool.
-          </p>
         </section>
 
         <div className="tabs" role="tablist" aria-label="Main navigation">

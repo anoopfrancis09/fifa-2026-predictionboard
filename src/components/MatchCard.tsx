@@ -58,9 +58,12 @@ export function MatchCard({ match, prediction, onChanged }: { match: Match; pred
       : 'Open';
 
   return (
-    <article className={`match-card ${closed ? 'is-closed' : ''}`}>
+    <article className={`match-card ${closed ? 'is-closed' : ''} ${prediction ? 'is-bidded' : ''}`}>
       <div className="match-topline">
-        <span className={`status-pill ${statusText.toLowerCase()}`}>{statusText}</span>
+        <div className="match-status-group">
+          <span className={`status-pill ${statusText.toLowerCase()}`}>{statusText}</span>
+          {prediction && <span className="bid-status-pill">Already bid</span>}
+        </div>
         <span>{formatDateTime(match.match_time)}</span>
       </div>
 

@@ -321,15 +321,26 @@ input:focus, select:focus {
   padding: 1.2rem;
 }
 
+.match-card.is-bidded {
+  background:
+    linear-gradient(135deg, rgba(24,179,123,0.18), rgba(249,199,79,0.16)),
+    rgba(255, 255, 255, 0.96);
+  border-color: rgba(24,179,123,0.45);
+  box-shadow: 0 24px 70px rgba(24, 179, 123, 0.2);
+}
+
 .match-card.is-closed {
   opacity: 0.92;
 }
 
-.match-topline, .form-footer, .result-header {
+.match-topline, .match-status-group, .form-footer, .result-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   gap: 1rem;
+}
+
+.match-topline, .form-footer, .result-header {
+  justify-content: space-between;
 }
 
 .match-topline {
@@ -359,6 +370,17 @@ input:focus, select:focus {
 .status-pill.finished {
   background: rgba(10,108,255,0.12);
   color: var(--blue);
+}
+
+.bid-status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  background: rgba(15,23,42,0.88);
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 900;
 }
 
 .teams {

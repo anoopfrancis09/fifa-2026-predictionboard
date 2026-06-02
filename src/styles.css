@@ -263,8 +263,8 @@ input:focus, select:focus {
 }
 
 .ghost-button.dark {
-  color: var(--ink);
-  background: rgba(15,23,42,0.06);
+  color: rgb(174 171 171 / 94%);
+  background: rgb(15 23 42 / 27%);
   border-color: var(--line);
 }
 

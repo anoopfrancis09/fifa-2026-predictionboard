@@ -9,6 +9,12 @@ function formatCoins(value: number) {
   });
 }
 
+function owingTone(value: number) {
+  if (value < 0) return 'positive';
+  if (value > 0) return 'negative';
+  return 'neutral';
+}
+
 export function LeaderboardPage() {
   const [rows, setRows] = useState<LeaderboardRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,6 +64,8 @@ export function LeaderboardPage() {
                 <tr>
                   <th>User</th>
                   <th>Remaining coins</th>
+                  <th>Owing</th>
+                  <th>Total balance</th>
                 </tr>
               </thead>
               <tbody>
@@ -65,6 +73,8 @@ export function LeaderboardPage() {
                   <tr key={row.user_id} className={row.is_me ? 'me-row' : ''}>
                     <td>{row.username}{row.is_me ? ' (you)' : ''}</td>
                     <td className="coin-balance">{formatCoins(row.balance)} coins</td>
+                    <td className={owingTone(row.owing_amount)}>{formatCoins(row.owing_amount)} coins</td>
+                    <td className="coin-balance">{formatCoins(row.total_balance)} coins</td>
                   </tr>
                 ))}
               </tbody>

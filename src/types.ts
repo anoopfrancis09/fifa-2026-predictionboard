@@ -57,6 +57,8 @@ export interface LeaderboardRow {
   user_id: string;
   username: string;
   balance: number;
+  owing_amount: number;
+  total_balance: number;
   is_me: boolean;
 }
 

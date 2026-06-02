@@ -58,14 +58,14 @@ export function LeaderboardPage() {
         {rows.length === 0 ? (
           <p className="muted-text">No users found.</p>
         ) : (
-          <div className="table-wrap">
-            <table>
+          <div className="table-wrap leaderboard-table-wrap">
+            <table className="leaderboard-table">
               <thead>
                 <tr>
                   <th>User</th>
                   {/* <th>Remaining coins</th> */}
                   <th>Owing</th>
-                  <th>Total balance</th>
+                  <th>Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -73,8 +73,8 @@ export function LeaderboardPage() {
                   <tr key={row.user_id} className={row.is_me ? 'me-row' : ''}>
                     <td>{row.username}{row.is_me ? ' (you)' : ''}</td>
                     {/* <td className="coin-balance">{formatCoins(row.balance)} coins</td> */}
-                    <td className={owingTone(row.owing_amount)}>{formatCoins(row.owing_amount)} coins</td>
-                    <td className="coin-balance">{formatCoins(row.total_balance)} coins</td>
+                    <td className={owingTone(row.owing_amount)}>{formatCoins(row.owing_amount)}</td>
+                    <td className="coin-balance">{formatCoins(row.total_balance)}</td>
                   </tr>
                 ))}
               </tbody>

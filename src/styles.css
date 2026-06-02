@@ -654,6 +654,35 @@ table {
   min-width: 620px;
 }
 
+.leaderboard-table {
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+  padding: 0.7rem 0.55rem;
+  font-size: 0.88rem;
+}
+
+.leaderboard-table th:first-child,
+.leaderboard-table td:first-child {
+  width: 44%;
+}
+
+.leaderboard-table th:nth-child(2),
+.leaderboard-table td:nth-child(2),
+.leaderboard-table th:nth-child(3),
+.leaderboard-table td:nth-child(3) {
+  width: 28%;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.leaderboard-table td:first-child {
+  overflow-wrap: anywhere;
+}
+
 th, td {
   text-align: left;
   padding: 0.9rem 1rem;
@@ -732,6 +761,12 @@ tr:last-child td {
   .balance-badge {
     grid-template-columns: 1fr;
     min-width: 160px;
+  }
+
+  .leaderboard-table th,
+  .leaderboard-table td {
+    padding: 0.6rem 0.4rem;
+    font-size: 0.78rem;
   }
 }
 

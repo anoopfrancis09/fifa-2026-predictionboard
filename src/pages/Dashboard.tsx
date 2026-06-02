@@ -67,7 +67,7 @@ export function Dashboard() {
       {matches.length === 0 ? (
         <div className="empty-state">
           <strong>No matches yet.</strong>
-          <p>Ask the admin to add upcoming games from the Admin tab.</p>
+          <p>Ask the admin to add upcoming games.</p>
         </div>
       ) : (
         <div className="match-grid">

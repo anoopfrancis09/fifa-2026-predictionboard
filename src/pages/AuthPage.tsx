@@ -36,9 +36,9 @@ export function AuthPage() {
         <div className="auth-copy">
           <span className="brand-mark big">🏆</span>
           <p className="eyebrow">World Cup 2026 Prediction Board</p>
-          <h1>Build your match-day pool with a clean $100 wallet.</h1>
+          {/* <h1>Build your match-day pool with a clean $100 wallet.</h1> */}
           <p>
-            Login with a username and password. Supabase Auth is used privately behind the scenes so row-level security can protect balances and bids.
+            Login with a username and password.
           </p>
         </div>
 
@@ -50,7 +50,7 @@ export function AuthPage() {
             <input
               value={username}
               onChange={(event) => setUsername(event.target.value)}
-              placeholder="anoop"
+              placeholder="username"
               autoComplete="username"
             />
           </label>

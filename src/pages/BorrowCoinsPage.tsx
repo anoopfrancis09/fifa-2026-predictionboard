@@ -2,7 +2,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { formatDateTime } from '../lib/format';
-import type { BorrowRequestRow, BorrowUser } from '../types';
+import type { BorrowRequestRow, BorrowUser, League } from '../types';
 
 function formatCoins(value: number) {
   return Number(value).toLocaleString('en-AU', {
@@ -22,7 +22,7 @@ function statusLabel(status: BorrowRequestRow['status']) {
   }
 }
 
-export function BorrowCoinsPage() {
+export function BorrowCoinsPage({ selectedLeague, onChooseLeague }: { selectedLeague: League | null; onChooseLeague: () => void }) {
   const { refreshProfile } = useAuth();
   const [users, setUsers] = useState<BorrowUser[]>([]);
   const [requests, setRequests] = useState<BorrowRequestRow[]>([]);
@@ -44,11 +44,15 @@ export function BorrowCoinsPage() {
   );
 
   const load = useCallback(async () => {
+    if (!selectedLeague) return;
+
     setLoading(true);
     setError(null);
 
     const [{ data: usersData, error: usersError }, { data: requestsData, error: requestsError }] = await Promise.all([
-      supabase.rpc('get_borrow_users'),
+      supabase.rpc('get_league_borrow_users', {
+        p_league_id: selectedLeague.id,
+      }),
       supabase.rpc('get_coin_borrow_requests'),
     ]);
 
@@ -61,9 +65,12 @@ export function BorrowCoinsPage() {
     const nextUsers = (usersData ?? []) as BorrowUser[];
     setUsers(nextUsers);
     setRequests((requestsData ?? []) as BorrowRequestRow[]);
-    setSelectedLenderId((current) => current || nextUsers[0]?.user_id || '');
+    setSelectedLenderId((current) => {
+      if (current && nextUsers.some((user) => user.user_id === current)) return current;
+      return nextUsers[0]?.user_id || '';
+    });
     setLoading(false);
-  }, []);
+  }, [selectedLeague]);
 
   useEffect(() => {
     load();
@@ -83,7 +90,10 @@ export function BorrowCoinsPage() {
         throw new Error('Enter an amount greater than 0.');
       }
 
-      const { error: requestError } = await supabase.rpc('request_coin_borrow', {
+      if (!selectedLeague) throw new Error('Choose a league first.');
+
+      const { error: requestError } = await supabase.rpc('request_coin_borrow_in_league', {
+        p_league_id: selectedLeague.id,
         p_lender_id: selectedLenderId,
         p_amount: numericAmount,
       });
@@ -145,13 +155,23 @@ export function BorrowCoinsPage() {
     }
   }
 
+  if (!selectedLeague) {
+    return (
+      <div className="empty-state">
+        <strong>Choose a league first.</strong>
+        <p>Borrowing is limited to users inside the selected league.</p>
+        <button className="primary-button" onClick={onChooseLeague}>View leagues</button>
+      </div>
+    );
+  }
+
   if (loading) return <p className="page-message">Loading borrow requests…</p>;
 
   return (
     <section className="borrow-layout">
       <form className="panel-card" onSubmit={sendRequest}>
         <p className="eyebrow">Borrow coins</p>
-        <h2>Request coins</h2>
+        <h2>{selectedLeague.name}</h2>
 
         <label className="field-label">
           Borrow from
@@ -161,7 +181,7 @@ export function BorrowCoinsPage() {
             ) : (
               users.map((user) => (
                 <option key={user.user_id} value={user.user_id}>
-                  {user.username} ({formatCoins(user.balance)} coins)
+                  {user.username}
                 </option>
               ))
             )}

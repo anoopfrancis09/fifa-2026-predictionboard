@@ -50,6 +50,7 @@ export function Layout({
 
           <div className="user-area">
             {profile && <BalanceBadge balance={profile.balance} owingBalance={profile.owing_balance} />}
+            {profile && <span className="username-pill">{profile.username}</span>}
             <button
               className="menu-button"
               type="button"

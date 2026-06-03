@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { choiceLabel, formatDateTime, money, resultTone, weightLabel } from '../lib/format';
+import { choiceLabel, formatDateTime, resultTone, weightLabel } from '../lib/format';
 import type { Match, MatchResultRow } from '../types';
 
 export function ResultsPage() {
@@ -103,35 +103,39 @@ export function ResultsPage() {
             )}
 
             <div className="privacy-note">
-              You can see who predicted what. Money columns are shown for your own row only; admins can see all stake and payout amounts.
+              This result grid only shows your own prediction and payout details.
             </div>
 
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>User</th>
-                    <th>Prediction</th>
-                    <th>Weight</th>
-                    <th>Stake</th>
-                    <th>Payout</th>
-                    <th>Net</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.prediction_id} className={row.is_me ? 'me-row' : ''}>
-                      <td>{row.username}{row.is_me ? ' (you)' : ''}</td>
-                      <td>{selectedMatch ? choiceLabel(row.choice, selectedMatch) : row.choice}</td>
-                      <td>{weightLabel(row.choice_weight)}</td>
-                      <td>{row.amount}</td>
-                      <td>{row.payout_amount}</td>
-                      <td className={resultTone(row.net_amount)}>{row.net_amount}</td>
+            {rows.length === 0 ? (
+              <p className="muted-text">You did not place a prediction for this match.</p>
+            ) : (
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>User</th>
+                      <th>Prediction</th>
+                      <th>Weight</th>
+                      <th>Stake</th>
+                      <th>Payout</th>
+                      <th>Net</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row.prediction_id} className="me-row">
+                        <td>{row.username} (you)</td>
+                        <td>{selectedMatch ? choiceLabel(row.choice, selectedMatch) : row.choice}</td>
+                        <td>{weightLabel(row.choice_weight)}</td>
+                        <td>{row.amount}</td>
+                        <td>{row.payout_amount}</td>
+                        <td className={resultTone(row.net_amount)}>{row.net_amount}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -50,7 +50,7 @@ export default function App() {
       )}
       {tab === 'matches' && <Dashboard selectedLeague={selectedLeague} onChooseLeague={() => setTab('leagues')} />}
       {tab === 'leaderboard' && <LeaderboardPage selectedLeague={selectedLeague} onChooseLeague={() => setTab('leagues')} />}
-      {tab === 'borrow' && <BorrowCoinsPage />}
+      {tab === 'borrow' && <BorrowCoinsPage selectedLeague={selectedLeague} onChooseLeague={() => setTab('leagues')} />}
       {tab === 'results' && <ResultsPage />}
       {tab === 'admin' && <AdminPage />}
     </Layout>

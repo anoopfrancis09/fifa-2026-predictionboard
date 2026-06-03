@@ -62,6 +62,29 @@ export interface LeaderboardRow {
   is_me: boolean;
 }
 
+export interface League {
+  id: string;
+  name: string;
+  is_private: boolean;
+  created_by: string;
+  created_by_username: string;
+  member_count: number;
+  is_owner: boolean;
+  is_member: boolean;
+  created_at: string;
+}
+
+export interface LeagueUserOption {
+  user_id: string;
+  username: string;
+  is_me: boolean;
+}
+
+export interface LeaguePrivateUser {
+  user_id: string;
+  username: string;
+}
+
 export interface BorrowUser {
   user_id: string;
   username: string;

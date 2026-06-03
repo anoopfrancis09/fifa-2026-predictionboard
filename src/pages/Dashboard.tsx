@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MatchCard } from '../components/MatchCard';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import type { Match, Prediction } from '../types';
+import type { League, Match, Prediction } from '../types';
 
-export function Dashboard() {
+export function Dashboard({ selectedLeague, onChooseLeague }: { selectedLeague: League | null; onChooseLeague: () => void }) {
   const { profile } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
@@ -51,6 +51,16 @@ export function Dashboard() {
     }, {});
   }, [predictions]);
 
+  if (!selectedLeague) {
+    return (
+      <div className="empty-state">
+        <strong>Choose a league first.</strong>
+        <p>Join or create a league, then come back here to place bids.</p>
+        <button className="primary-button" onClick={onChooseLeague}>View leagues</button>
+      </div>
+    );
+  }
+
   if (loading) return <p className="page-message">Loading matches…</p>;
   if (error) return <p className="error-text">{error}</p>;
 
@@ -59,7 +69,7 @@ export function Dashboard() {
       <div className="section-heading">
         <div>
           <p className="eyebrow">Match predictions</p>
-          <h2>Upcoming and active matches</h2>
+          <h2>{selectedLeague.name}</h2>
         </div>
         <button className="ghost-button dark" onClick={load}>Refresh</button>
       </div>

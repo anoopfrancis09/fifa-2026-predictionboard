@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import type { LeaderboardRow } from '../types';
+import type { League, LeaderboardRow } from '../types';
 
 function formatCoins(value: number) {
   return Number(value).toLocaleString('en-AU', {
@@ -15,16 +15,19 @@ function owingTone(value: number) {
   return 'neutral';
 }
 
-export function LeaderboardPage() {
+export function LeaderboardPage({ selectedLeague, onChooseLeague }: { selectedLeague: League | null; onChooseLeague: () => void }) {
   const [rows, setRows] = useState<LeaderboardRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    if (!selectedLeague) return;
     setLoading(true);
     setError(null);
 
-    const { data, error: leaderboardError } = await supabase.rpc('get_leaderboard');
+    const { data, error: leaderboardError } = await supabase.rpc('get_league_leaderboard', {
+      p_league_id: selectedLeague.id,
+    });
 
     if (leaderboardError) {
       setError(leaderboardError.message);
@@ -34,11 +37,21 @@ export function LeaderboardPage() {
 
     setRows((data ?? []) as LeaderboardRow[]);
     setLoading(false);
-  }, []);
+  }, [selectedLeague]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  if (!selectedLeague) {
+    return (
+      <div className="empty-state">
+        <strong>Choose a league first.</strong>
+        <p>Leaderboards are calculated from users inside a league.</p>
+        <button className="primary-button" onClick={onChooseLeague}>View leagues</button>
+      </div>
+    );
+  }
 
   if (loading) return <p className="page-message">Loading leaderboard…</p>;
 
@@ -47,7 +60,7 @@ export function LeaderboardPage() {
       <div className="section-heading">
         <div>
           <p className="eyebrow">Leaderboard</p>
-          <h2>User balances</h2>
+          <h2>{selectedLeague.name}</h2>
         </div>
         <button className="ghost-button dark" onClick={load}>Refresh</button>
       </div>

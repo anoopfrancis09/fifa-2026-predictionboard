@@ -1,11 +1,39 @@
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { BalanceBadge } from './BalanceBadge';
 import { useAuth } from '../context/AuthContext';
+import type { Tab } from '../App';
+import type { League } from '../types';
 
-type Tab = 'matches' | 'leaderboard' | 'borrow' | 'results' | 'admin';
+const menuItems: Array<{ tab: Tab; label: string; adminOnly?: boolean }> = [
+  { tab: 'leagues', label: 'Leagues' },
+  { tab: 'matches', label: 'Matches' },
+  { tab: 'leaderboard', label: 'Leaderboard' },
+  { tab: 'borrow', label: 'Borrow' },
+  { tab: 'results', label: 'Results' },
+  { tab: 'admin', label: 'Admin', adminOnly: true },
+];
 
-export function Layout({ activeTab, onTabChange, children }: { activeTab: Tab; onTabChange: (tab: Tab) => void; children: ReactNode }) {
+export function Layout({
+  activeTab,
+  selectedLeague,
+  onTabChange,
+  children,
+}: {
+  activeTab: Tab;
+  selectedLeague: League | null;
+  onTabChange: (tab: Tab) => void;
+  children: ReactNode;
+}) {
   const { profile, signOut } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  function changeTab(tab: Tab) {
+    onTabChange(tab);
+    setMobileMenuOpen(false);
+  }
+
+  const visibleItems = menuItems.filter((item) => !item.adminOnly || profile?.role === 'admin');
 
   return (
     <div className="app-shell">
@@ -16,12 +44,20 @@ export function Layout({ activeTab, onTabChange, children }: { activeTab: Tab; o
             <span className="brand-mark">🏆</span>
             <div>
               <strong>World Cup 2026</strong>
-              <small>Prediction Board</small>
+              <small>{selectedLeague ? selectedLeague.name : 'Prediction Board'}</small>
             </div>
           </div>
 
           <div className="user-area">
             {profile && <BalanceBadge balance={profile.balance} owingBalance={profile.owing_balance} />}
+            <button
+              className="menu-button"
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open navigation"
+            >
+              ☰
+            </button>
             <button className="ghost-button" onClick={signOut}>Logout</button>
           </div>
         </nav>
@@ -31,16 +67,43 @@ export function Layout({ activeTab, onTabChange, children }: { activeTab: Tab; o
           <h1>Predict the match, protect your balance, climb the table.</h1>
         </section>
 
-        <div className="tabs" role="tablist" aria-label="Main navigation">
-          <button className={activeTab === 'matches' ? 'active' : ''} onClick={() => onTabChange('matches')}>Matches</button>
-          <button className={activeTab === 'leaderboard' ? 'active' : ''} onClick={() => onTabChange('leaderboard')}>Leaderboard</button>
-          <button className={activeTab === 'borrow' ? 'active' : ''} onClick={() => onTabChange('borrow')}>Borrow</button>
-          <button className={activeTab === 'results' ? 'active' : ''} onClick={() => onTabChange('results')}>Results</button>
-          {profile?.role === 'admin' && (
-            <button className={activeTab === 'admin' ? 'active' : ''} onClick={() => onTabChange('admin')}>Admin</button>
-          )}
+        <div className="tabs desktop-tabs" role="tablist" aria-label="Main navigation">
+          {visibleItems.map((item) => (
+            <button
+              key={item.tab}
+              className={activeTab === item.tab ? 'active' : ''}
+              onClick={() => changeTab(item.tab)}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
       </header>
+
+      {mobileMenuOpen && (
+        <div className="mobile-nav-layer" role="presentation" onClick={() => setMobileMenuOpen(false)}>
+          <aside className="mobile-nav" aria-label="Mobile navigation" onClick={(event) => event.stopPropagation()}>
+            <div className="mobile-nav-header">
+              <div>
+                <strong>Menu</strong>
+                <span>{selectedLeague?.name ?? 'No league selected'}</span>
+              </div>
+              <button className="menu-button close" type="button" onClick={() => setMobileMenuOpen(false)} aria-label="Close navigation">×</button>
+            </div>
+            <div className="mobile-nav-links">
+              {visibleItems.map((item) => (
+                <button
+                  key={item.tab}
+                  className={activeTab === item.tab ? 'active' : ''}
+                  onClick={() => changeTab(item.tab)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </aside>
+        </div>
+      )}
 
       <main className="page-content">{children}</main>
     </div>

@@ -2,7 +2,88 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MatchCard } from '../components/MatchCard';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import type { League, Match, MatchStatus, Prediction } from '../types';
+import { choiceLabel, formatDateTime } from '../lib/format';
+import type { League, Match, MatchBidRow, MatchStatus, Prediction } from '../types';
+
+function MatchBidListPage({
+  league,
+  match,
+  onBack,
+}: {
+  league: League;
+  match: Match;
+  onBack: () => void;
+}) {
+  const [rows, setRows] = useState<MatchBidRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    const { data, error: listError } = await supabase.rpc('get_locked_match_bid_list', {
+      p_league_id: league.id,
+      p_match_id: match.id,
+    });
+
+    if (listError) {
+      setError(listError.message);
+      setLoading(false);
+      return;
+    }
+
+    setRows((data ?? []) as MatchBidRow[]);
+    setLoading(false);
+  }, [league.id, match.id]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  return (
+    <section className="bid-list-page">
+      <div className="section-heading">
+        <div>
+          <p className="eyebrow">Locked bid list</p>
+          <h2>{match.team_a} vs {match.team_b}</h2>
+          <p className="muted-text">{league.name} • {formatDateTime(match.match_time)}</p>
+        </div>
+        <button className="ghost-button dark" type="button" onClick={onBack}>Back</button>
+      </div>
+
+      {loading ? (
+        <p className="page-message">Loading bids...</p>
+      ) : error ? (
+        <p className="error-text">{error}</p>
+      ) : rows.length === 0 ? (
+        <div className="empty-state">
+          <strong>No bids yet.</strong>
+          <p>No users have placed a bid for this match in this league.</p>
+        </div>
+      ) : (
+        <div className="bid-list-grid">
+          {rows.map((row) => (
+            <article key={row.prediction_id} className={`bid-list-row ${row.is_me ? 'is-me' : ''}`}>
+              <div>
+                <strong>{row.username}{row.is_me ? ' (you)' : ''}</strong>
+                <span>{formatDateTime(row.created_at)}</span>
+              </div>
+              <div>
+                <span>Prediction</span>
+                <strong>{choiceLabel(row.choice, match)}</strong>
+              </div>
+              <div>
+                <span>Bid amount</span>
+                <strong>{Number(row.amount).toLocaleString('en-AU')} coins</strong>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
 
 export function Dashboard({
   selectedLeague,
@@ -21,6 +102,7 @@ export function Dashboard({
   const [loading, setLoading] = useState(true);
   const [checkingLeagues, setCheckingLeagues] = useState(false);
   const [hasJoinedLeague, setHasJoinedLeague] = useState<boolean | null>(null);
+  const [bidListMatch, setBidListMatch] = useState<Match | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -110,6 +192,10 @@ export function Dashboard({
     load();
   }, [load]);
 
+  useEffect(() => {
+    setBidListMatch(null);
+  }, [selectedLeague?.id, matchStatus]);
+
   const predictionByMatch = useMemo(() => {
     return predictions.reduce<Record<string, Prediction>>((acc, prediction) => {
       acc[prediction.match_id] = prediction;
@@ -136,6 +222,16 @@ export function Dashboard({
 
   const isFinishedView = matchStatus === 'finished';
 
+  if (bidListMatch) {
+    return (
+      <MatchBidListPage
+        league={selectedLeague}
+        match={bidListMatch}
+        onBack={() => setBidListMatch(null)}
+      />
+    );
+  }
+
   return (
     <section>
       <div className="section-heading">
@@ -161,6 +257,7 @@ export function Dashboard({
               leagueId={selectedLeague.id}
               leagueBalance={selectedLeague.wallet_balance ?? 0}
               onChanged={load}
+              onViewBids={setBidListMatch}
             />
           ))}
         </div>

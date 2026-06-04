@@ -2095,17 +2095,19 @@ tbody tr:hover {
     border-color: rgba(0, 217, 255, 0.3);
   }
 
+  .modal-layer {
+  place-items: flex-start;
+}
+
   .settings-actions {
-    position: sticky;
-    bottom: -16px;
+    position: static;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
-    margin: 14px -16px -16px;
-    padding: 10px 16px 12px;
-    background: rgba(26, 31, 46, 0.96);
+    margin: 14px 0 0;
+    padding: 10px 0 0;
+    background: transparent;
     border-top: 1px solid rgba(0, 217, 255, 0.18);
-    backdrop-filter: blur(10px);
   }
 
   .settings-actions button,

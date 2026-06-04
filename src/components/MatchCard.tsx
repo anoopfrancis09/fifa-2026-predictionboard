@@ -183,12 +183,6 @@ export function MatchCard({ match, prediction, onChanged }: { match: Match; pred
         </div>
       </div>
 
-      <div className="weight-strip" aria-label="Outcome weights">
-        <span>{match.team_a}: {weightLabel(match.team_a_weight)}</span>
-        <span>Draw: {weightLabel(match.draw_weight)}</span>
-        <span>{match.team_b}: {weightLabel(match.team_b_weight)}</span>
-      </div>
-
       <p className="close-note">Board closes at {formatDateTime(closeTime(match))}</p>
 
       {prediction && (
@@ -238,7 +232,8 @@ export function MatchCard({ match, prediction, onChanged }: { match: Match; pred
                 className={choice === nextChoice ? 'choice active' : 'choice'}
                 onClick={() => setChoice(nextChoice)}
               >
-                <span>{choiceLabel(nextChoice, match)}</span>
+                <span className="choice-label">{choiceLabel(nextChoice, match)}</span>
+                <span className="choice-odds">{weightLabel(choiceWeight(nextChoice, match))}</span>
               </button>
             ))}
           </div>

@@ -602,6 +602,10 @@ select:focus {
 }
 
 .choice {
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  min-height: 58px;
   padding: 12px;
   color: var(--purple);
   background: white;
@@ -611,10 +615,28 @@ select:focus {
   font-weight: 800;
 }
 
+.choice-label,
+.choice-odds {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.choice-odds {
+  color: #666666;
+  font-size: 12px;
+  font-weight: 900;
+}
+
 .choice:hover,
 .choice.active {
   color: white;
   background: var(--purple);
+}
+
+.choice:hover .choice-odds,
+.choice.active .choice-odds {
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .my-prediction,
@@ -1565,6 +1587,7 @@ tbody tr:hover {
   }
 
   .choice {
+    min-height: 54px;
     padding: 10px 6px;
     color: #00d9ff;
     background: rgba(0, 217, 255, 0.1);
@@ -1578,6 +1601,12 @@ tbody tr:hover {
     color: #ffffff;
     background: linear-gradient(135deg, #00d9ff 0%, #0099cc 100%);
     border-color: #00d9ff;
+  }
+
+  .choice-odds {
+    color: currentColor;
+    font-size: 11px;
+    opacity: 0.82;
   }
 
   .prediction-form .field-label {

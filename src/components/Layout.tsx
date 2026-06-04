@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { BalanceBadge } from './BalanceBadge';
 import { useAuth } from '../context/AuthContext';
@@ -7,12 +6,30 @@ import type { League } from '../types';
 
 const menuItems: Array<{ tab: Tab; label: string; adminOnly?: boolean }> = [
   { tab: 'leagues', label: 'Leagues' },
-  { tab: 'matches', label: 'Matches' },
+  { tab: 'matches', label: 'Upcoming Matches' },
   { tab: 'leaderboard', label: 'Leaderboard' },
-  { tab: 'borrow', label: 'Borrow' },
+  { tab: 'borrow', label: 'Borrow Coins' },
   { tab: 'results', label: 'Results' },
   { tab: 'admin', label: 'Admin', adminOnly: true },
 ];
+
+const menuIcon: Record<Tab, string> = {
+  leagues: '👥',
+  matches: '⚽',
+  leaderboard: '🏆',
+  borrow: '🪙',
+  results: '📊',
+  admin: '⚙️',
+};
+
+const mobileScreenMeta: Record<Tab, { title: string; subtitle: string }> = {
+  leagues: { title: '👥 Leagues', subtitle: 'Choose where to play' },
+  matches: { title: '⚽ Upcoming Matches', subtitle: 'Place your predictions' },
+  leaderboard: { title: '🏆 Leaderboard', subtitle: 'Top predictors' },
+  borrow: { title: '🪙 Borrow Coins', subtitle: 'Request and return coins' },
+  results: { title: '📊 Match Results', subtitle: 'Your prediction history' },
+  admin: { title: '⚙️ Admin Panel', subtitle: 'Manage platform' },
+};
 
 export function Layout({
   activeTab,
@@ -26,87 +43,93 @@ export function Layout({
   children: ReactNode;
 }) {
   const { profile, signOut } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  function changeTab(tab: Tab) {
-    onTabChange(tab);
-    setMobileMenuOpen(false);
-  }
-
   const visibleItems = menuItems.filter((item) => !item.adminOnly || profile?.role === 'admin');
+  const initials = (profile?.username ?? 'User')
+    .split(/[\s_-]+/)
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <div className="app-shell">
-      <header className="hero">
-        <div className="hero-bg-ball" aria-hidden="true">⚽</div>
-        <nav className="topbar">
-          <div className="brand">
-            <span className="brand-mark">🏆</span>
-            <div>
-              <strong>World Cup 2026</strong>
-              <small>{selectedLeague ? selectedLeague.name : 'Prediction Board'}</small>
-            </div>
-          </div>
+      <div className="container">
+        <header className="design-header">
+          <h1>⚽ FIFA 2026 World Cup Prediction Site</h1>
+          <p>{selectedLeague ? selectedLeague.name : 'Pick a league, predict matches, and climb the table'}</p>
+        </header>
 
-          <div className="user-area">
-            {profile && <BalanceBadge balance={profile.balance} owingBalance={profile.owing_balance} />}
-            {profile && <span className="username-pill">{profile.username}</span>}
-            <button
-              className="menu-button"
-              type="button"
-              onClick={() => setMobileMenuOpen(true)}
-              aria-label="Open navigation"
-            >
-              ☰
-            </button>
-            <button className="ghost-button" onClick={signOut}>Logout</button>
-          </div>
-        </nav>
-
-        <section className="hero-content">
-          <p className="eyebrow">Friendly pool • $100 starting wallet • closes 15 minutes before kick-off</p>
-          <h1>Predict the match, protect your balance, climb the table.</h1>
-        </section>
-
-        <div className="tabs desktop-tabs" role="tablist" aria-label="Main navigation">
+        <div className="screen-navigation" role="tablist" aria-label="Main navigation">
           {visibleItems.map((item) => (
             <button
               key={item.tab}
-              className={activeTab === item.tab ? 'active' : ''}
-              onClick={() => changeTab(item.tab)}
+              className={activeTab === item.tab ? 'nav-btn active' : 'nav-btn'}
+              onClick={() => onTabChange(item.tab)}
             >
+              <span aria-hidden="true">{menuIcon[item.tab]}</span>
               {item.label}
             </button>
           ))}
         </div>
-      </header>
 
-      {mobileMenuOpen && (
-        <div className="mobile-nav-layer" role="presentation" onClick={() => setMobileMenuOpen(false)}>
-          <aside className="mobile-nav" aria-label="Mobile navigation" onClick={(event) => event.stopPropagation()}>
-            <div className="mobile-nav-header">
+        <div className="screen active">
+          <div className="mobile-status-bar" aria-hidden="true">
+            <span>9:41</span>
+            <span>📶 🔋</span>
+          </div>
+
+          <header className="mobile-header">
+            <button className="mobile-logout-button" type="button" onClick={signOut}>
+              Logout
+            </button>
+            <h2>{mobileScreenMeta[activeTab].title}</h2>
+            <p className="subtitle">{mobileScreenMeta[activeTab].subtitle}</p>
+          </header>
+
+          <div className="mobile-balance-card">
+            <div className="mobile-balance-header">
               <div>
-                <strong>Menu</strong>
-                <span>{selectedLeague?.name ?? 'No league selected'}</span>
+                <div className="mobile-user-name">{profile?.username}</div>
+                <div className="mobile-balance-label">{selectedLeague?.name ?? 'Prediction Board'}</div>
               </div>
-              <button className="menu-button close" type="button" onClick={() => setMobileMenuOpen(false)} aria-label="Close navigation">×</button>
+              <div className="mobile-user-icon">{profile?.role === 'admin' ? '⚙️' : '👤'}</div>
             </div>
-            <div className="mobile-nav-links">
-              {visibleItems.map((item) => (
-                <button
-                  key={item.tab}
-                  className={activeTab === item.tab ? 'active' : ''}
-                  onClick={() => changeTab(item.tab)}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </aside>
-        </div>
-      )}
+            <BalanceBadge balance={profile?.balance ?? 0} owingBalance={profile?.owing_balance ?? 0} />
+          </div>
 
-      <main className="page-content">{children}</main>
+          <div className="dashboard">
+            <aside className="sidebar">
+              <div className="user-info">
+                <div className="user-avatar">{profile?.role === 'admin' ? '⚙️' : initials}</div>
+                <div className="user-name">{profile?.username}</div>
+                <BalanceBadge balance={profile?.balance ?? 0} owingBalance={profile?.owing_balance ?? 0} />
+              </div>
+
+              <ul className="sidebar-menu">
+                {visibleItems.map((item) => (
+                  <li key={item.tab}>
+                    <button
+                      className={activeTab === item.tab ? 'active' : ''}
+                      onClick={() => onTabChange(item.tab)}
+                    >
+                      <span aria-hidden="true">{menuIcon[item.tab]}</span>
+                      {item.label}
+                    </button>
+                  </li>
+                ))}
+                <li>
+                  <button onClick={signOut}>
+                    <span aria-hidden="true">🚪</span>
+                    Logout
+                  </button>
+                </li>
+              </ul>
+            </aside>
+
+            <main className="main-content">{children}</main>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

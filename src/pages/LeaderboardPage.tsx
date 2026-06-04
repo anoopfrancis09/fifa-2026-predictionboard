@@ -9,10 +9,23 @@ function formatCoins(value: number) {
   });
 }
 
+function formatPoints(value: number) {
+  return Number(value).toLocaleString('en-AU', {
+    maximumFractionDigits: 0,
+  });
+}
+
 function owingTone(value: number) {
   if (value < 0) return 'positive';
   if (value > 0) return 'negative';
   return 'neutral';
+}
+
+function rankMedal(index: number) {
+  if (index === 0) return '🥇';
+  if (index === 1) return '🥈';
+  if (index === 2) return '🥉';
+  return index + 1;
 }
 
 export function LeaderboardPage({ selectedLeague, onChooseLeague }: { selectedLeague: League | null; onChooseLeague: () => void }) {
@@ -71,28 +84,43 @@ export function LeaderboardPage({ selectedLeague, onChooseLeague }: { selectedLe
         {rows.length === 0 ? (
           <p className="muted-text">No users found.</p>
         ) : (
-          <div className="table-wrap leaderboard-table-wrap">
-            <table className="leaderboard-table">
-              <thead>
-                <tr>
-                  <th>User</th>
-                  {/* <th>Remaining coins</th> */}
-                  <th>Owing</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.user_id} className={row.is_me ? 'me-row' : ''}>
-                    <td>{row.username}{row.is_me ? ' (you)' : ''}</td>
-                    {/* <td className="coin-balance">{formatCoins(row.balance)} coins</td> */}
-                    <td className={owingTone(row.owing_amount)}>{formatCoins(row.owing_amount)}</td>
-                    <td className="coin-balance">{formatCoins(row.total_balance)}</td>
+          <>
+            <div className="mobile-leaderboard-list">
+              {rows.map((row, index) => (
+                <article key={row.user_id} className={`mobile-rank-card ${index < 3 ? 'top-rank' : ''} ${row.is_me ? 'me-rank' : ''}`}>
+                  <div className="mobile-rank-medal">{rankMedal(index)}</div>
+                  <div className="mobile-rank-info">
+                    <strong>{row.username}{row.is_me ? ' (you)' : ''}</strong>
+                    <span>Total balance • Owing {formatCoins(row.owing_amount)}</span>
+                  </div>
+                  <strong className="mobile-rank-points">{formatPoints(row.total_balance)}</strong>
+                </article>
+              ))}
+            </div>
+
+            <div className="table-wrap leaderboard-table-wrap">
+              <table className="leaderboard-table">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    {/* <th>Remaining coins</th> */}
+                    <th>Owing</th>
+                    <th>Total</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={row.user_id} className={row.is_me ? 'me-row' : ''}>
+                      <td>{row.username}{row.is_me ? ' (you)' : ''}</td>
+                      {/* <td className="coin-balance">{formatCoins(row.balance)} coins</td> */}
+                      <td className={owingTone(row.owing_amount)}>{formatCoins(row.owing_amount)}</td>
+                      <td className="coin-balance">{formatCoins(row.total_balance)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </section>

@@ -32,59 +32,64 @@ export function AuthPage() {
 
   return (
     <main className="auth-page">
-      <section className="auth-panel">
-        <div className="auth-copy">
-          <span className="brand-mark big">🏆</span>
-          <p className="eyebrow">World Cup 2026 Prediction Board</p>
-          {/* <h1>Build your match-day pool with a clean $100 wallet.</h1> */}
-          <p>
-            Login with a username and password.
-          </p>
+      <section className="auth-panel screen active">
+        <div className="mobile-status-bar auth-status-bar" aria-hidden="true">
+          <span>9:41</span>
+          <span>📶 🔋</span>
         </div>
+        <div className="login-container">
+          <div className="logo-section">
+            <div className="logo">🏆</div>
+            <h2>FIFA 2026</h2>
+            <p>World Cup Predictions</p>
+          </div>
 
-        <form className="auth-card" onSubmit={handleSubmit}>
-          <h2>{mode === 'login' ? 'Login' : 'Create account'}</h2>
+          <form className="auth-card" onSubmit={handleSubmit}>
+            <h2>{mode === 'login' ? 'Login' : 'Sign up'}</h2>
 
-          <label className="field-label">
-            Username
-            <input
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              placeholder="username"
-              autoComplete="username"
-            />
-          </label>
+            <label className="field-label">
+              Username
+              <input
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                placeholder="username"
+                autoComplete="username"
+              />
+            </label>
 
-          <label className="field-label">
-            Password
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="••••••••"
-              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-            />
-          </label>
+            <label className="field-label">
+              Password
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="••••••••"
+                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+              />
+            </label>
 
-          {error && <p className="error-text">{error}</p>}
-          {message && <p className="success-text">{message}</p>}
+            {error && <p className="error-text">{error}</p>}
+            {message && <p className="success-text">{message}</p>}
 
-          <button className="primary-button full-width" disabled={loading}>
-            {loading ? 'Please wait…' : mode === 'login' ? 'Login' : 'Create account'}
-          </button>
+            <button className="primary-button full-width" disabled={loading}>
+              {loading ? 'Please wait…' : mode === 'login' ? 'Login' : 'Create account'}
+            </button>
 
-          <button
-            type="button"
-            className="link-button"
-            onClick={() => {
-              setMode(mode === 'login' ? 'signup' : 'login');
-              setError(null);
-              setMessage(null);
-            }}
-          >
-            {mode === 'login' ? 'Need a new user? Create one' : 'Already have a user? Login'}
-          </button>
-        </form>
+            <div className="divider"><span>OR</span></div>
+
+            <button
+              type="button"
+              className="link-button"
+              onClick={() => {
+                setMode(mode === 'login' ? 'signup' : 'login');
+                setError(null);
+                setMessage(null);
+              }}
+            >
+              {mode === 'login' ? 'Need a new user? Create one' : 'Already have a user? Login'}
+            </button>
+          </form>
+        </div>
       </section>
     </main>
   );

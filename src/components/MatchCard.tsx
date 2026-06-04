@@ -6,6 +6,24 @@ import type { Match, Prediction, PredictionChoice } from '../types';
 
 const choices: PredictionChoice[] = ['team_a', 'draw', 'team_b'];
 
+function teamMark(name: string) {
+  return name
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function coinResult(value: number | null | undefined) {
+  const numericValue = Number(value ?? 0);
+  const sign = numericValue > 0 ? '+' : '';
+  return `${sign}${numericValue.toLocaleString('en-AU', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} coins`;
+}
+
 export function MatchCard({ match, prediction, onChanged }: { match: Match; prediction?: Prediction; onChanged: () => Promise<void> }) {
   const { profile, refreshProfile } = useAuth();
   const closed = isBoardClosed(match);
@@ -68,9 +86,15 @@ export function MatchCard({ match, prediction, onChanged }: { match: Match; pred
       </div>
 
       <div className="teams">
-        <strong>{match.team_a}</strong>
-        <span>vs</span>
-        <strong>{match.team_b}</strong>
+        <div className="team">
+          <div className="team-flag">{teamMark(match.team_a)}</div>
+          <strong className="team-name">{match.team_a}</strong>
+        </div>
+        <span className="vs">VS</span>
+        <div className="team">
+          <div className="team-flag">{teamMark(match.team_b)}</div>
+          <strong className="team-name">{match.team_b}</strong>
+        </div>
       </div>
 
       <div className="weight-strip" aria-label="Outcome weights">
@@ -89,7 +113,31 @@ export function MatchCard({ match, prediction, onChanged }: { match: Match; pred
       )}
 
       {match.status === 'finished' ? (
-        <p className="muted-text">This match is settled. Check the Results tab for outcome details.</p>
+        <div className="settled-match-summary">
+          <div className="settled-match-topline">
+            <span>Final result</span>
+            <strong>{match.result ? choiceLabel(match.result, match) : 'Result unavailable'}</strong>
+          </div>
+
+          {prediction ? (
+            <div className="settled-user-result">
+              <div>
+                <span>Your prediction</span>
+                <strong>{choiceLabel(prediction.choice, match)} • {prediction.amount} coins</strong>
+              </div>
+              <div>
+                <span>Payout</span>
+                <strong>{coinResult(prediction.payout_amount)}</strong>
+              </div>
+              <div className={prediction.net_amount > 0 ? 'result-net positive' : prediction.net_amount < 0 ? 'result-net negative' : 'result-net neutral'}>
+                <span>{prediction.net_amount >= 0 ? 'Earnings' : 'Loss'}</span>
+                <strong>{coinResult(prediction.net_amount)}</strong>
+              </div>
+            </div>
+          ) : (
+            <p className="muted-text">You did not place a prediction for this match.</p>
+          )}
+        </div>
       ) : closed ? (
         <p className="warning-box">Prediction board is locked. You can only view your own prediction now.</p>
       ) : (profile?.balance ?? 0) <= 0 && !prediction ? (
@@ -105,7 +153,6 @@ export function MatchCard({ match, prediction, onChanged }: { match: Match; pred
                 onClick={() => setChoice(nextChoice)}
               >
                 <span>{choiceLabel(nextChoice, match)}</span>
-                <small>{weightLabel(choiceWeight(nextChoice, match))}</small>
               </button>
             ))}
           </div>

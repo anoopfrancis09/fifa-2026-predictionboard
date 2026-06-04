@@ -33,10 +33,6 @@ export function AuthPage() {
   return (
     <main className="auth-page">
       <section className="auth-panel screen active">
-        <div className="mobile-status-bar auth-status-bar" aria-hidden="true">
-          <span>9:41</span>
-          <span>📶 🔋</span>
-        </div>
         <div className="login-container">
           <div className="logo-section">
             <div className="logo">🏆</div>

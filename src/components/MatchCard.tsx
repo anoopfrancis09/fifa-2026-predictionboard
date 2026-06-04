@@ -6,7 +6,93 @@ import type { Match, Prediction, PredictionChoice } from '../types';
 
 const choices: PredictionChoice[] = ['team_a', 'draw', 'team_b'];
 
+const countryCodeByTeamName: Record<string, string> = {
+  algeria: 'DZ',
+  argentina: 'AR',
+  australia: 'AU',
+  austria: 'AT',
+  belgium: 'BE',
+  brazil: 'BR',
+  cameroon: 'CM',
+  canada: 'CA',
+  chile: 'CL',
+  china: 'CN',
+  colombia: 'CO',
+  costa_rica: 'CR',
+  croatia: 'HR',
+  denmark: 'DK',
+  ecuador: 'EC',
+  egypt: 'EG',
+  france: 'FR',
+  germany: 'DE',
+  ghana: 'GH',
+  greece: 'GR',
+  india: 'IN',
+  iran: 'IR',
+  iraq: 'IQ',
+  ireland: 'IE',
+  italy: 'IT',
+  japan: 'JP',
+  mexico: 'MX',
+  morocco: 'MA',
+  netherlands: 'NL',
+  new_zealand: 'NZ',
+  nigeria: 'NG',
+  norway: 'NO',
+  paraguay: 'PY',
+  peru: 'PE',
+  poland: 'PL',
+  portugal: 'PT',
+  qatar: 'QA',
+  saudi_arabia: 'SA',
+  scotland: 'GB',
+  senegal: 'SN',
+  serbia: 'RS',
+  south_africa: 'ZA',
+  south_korea: 'KR',
+  spain: 'ES',
+  sweden: 'SE',
+  switzerland: 'CH',
+  tunisia: 'TN',
+  turkey: 'TR',
+  ukraine: 'UA',
+  united_arab_emirates: 'AE',
+  united_states: 'US',
+  uruguay: 'UY',
+  usa: 'US',
+  wales: 'GB',
+};
+
+const specialFlagByTeamName: Record<string, string> = {
+  england: '🏴',
+};
+
+function normalizeTeamName(name: string) {
+  return name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function codeToFlag(code: string) {
+  return code
+    .toUpperCase()
+    .split('')
+    .map((letter) => String.fromCodePoint(127397 + letter.charCodeAt(0)))
+    .join('');
+}
+
 function teamMark(name: string) {
+  const normalizedName = normalizeTeamName(name);
+  const specialFlag = specialFlagByTeamName[normalizedName];
+  if (specialFlag) return specialFlag;
+
+  const countryCode = countryCodeByTeamName[normalizedName];
+  if (countryCode) return codeToFlag(countryCode);
+
   return name
     .split(/\s+/)
     .map((part) => part[0])

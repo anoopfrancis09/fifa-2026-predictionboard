@@ -7,6 +7,7 @@ import type { League } from '../types';
 const menuItems: Array<{ tab: Tab; label: string; adminOnly?: boolean }> = [
   { tab: 'leagues', label: 'Leagues' },
   { tab: 'matches', label: 'Upcoming Matches' },
+  { tab: 'finished', label: 'Finished Matches' },
   { tab: 'leaderboard', label: 'Leaderboard' },
   { tab: 'borrow', label: 'Borrow Coins' },
   { tab: 'results', label: 'Results' },
@@ -16,6 +17,7 @@ const menuItems: Array<{ tab: Tab; label: string; adminOnly?: boolean }> = [
 const menuIcon: Record<Tab, string> = {
   leagues: '👥',
   matches: '⚽',
+  finished: '✅',
   leaderboard: '🏆',
   borrow: '🪙',
   results: '📊',
@@ -25,6 +27,7 @@ const menuIcon: Record<Tab, string> = {
 const mobileScreenMeta: Record<Tab, { title: string; subtitle: string }> = {
   leagues: { title: '👥 Leagues', subtitle: 'Choose where to play' },
   matches: { title: '⚽ Upcoming Matches', subtitle: 'Place your predictions' },
+  finished: { title: '✅ Finished Matches', subtitle: 'Review settled games' },
   leaderboard: { title: '🏆 Leaderboard', subtitle: 'Top predictors' },
   borrow: { title: '🪙 Borrow Coins', subtitle: 'Request and return coins' },
   results: { title: '📊 Match Results', subtitle: 'Your prediction history' },
@@ -73,11 +76,6 @@ export function Layout({
         </div>
 
         <div className="screen active">
-          <div className="mobile-status-bar" aria-hidden="true">
-            <span>9:41</span>
-            <span>📶 🔋</span>
-          </div>
-
           <header className="mobile-header">
             <button className="mobile-logout-button" type="button" onClick={signOut}>
               Logout

@@ -551,13 +551,13 @@ select:focus {
 }
 
 .team-flag {
-  width: 60px;
-  height: 60px;
+  width: 72px;
+  height: 72px;
   margin: 0 auto 10px;
   display: grid;
   place-items: center;
   color: white;
-  font-size: 18px;
+  font-size: 30px;
   font-weight: 900;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--purple) 0%, var(--violet) 100%);
@@ -1530,12 +1530,12 @@ tbody tr:hover {
   }
 
   .team-flag {
-    width: 40px;
-    height: 40px;
+    width: 52px;
+    height: 52px;
     margin: 0;
     color: #ffffff;
     background: linear-gradient(135deg, #333333 0%, #555555 100%);
-    font-size: 13px;
+    font-size: 26px;
   }
 
   .team-name {

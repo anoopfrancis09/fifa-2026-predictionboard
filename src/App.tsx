@@ -10,7 +10,7 @@ import { LeaguesPage } from './pages/LeaguesPage';
 import { ResultsPage } from './pages/ResultsPage';
 import type { League } from './types';
 
-export type Tab = 'leagues' | 'matches' | 'leaderboard' | 'borrow' | 'results' | 'admin';
+export type Tab = 'leagues' | 'matches' | 'finished' | 'leaderboard' | 'borrow' | 'results' | 'admin';
 
 export default function App() {
   const { session, profile, loading } = useAuth();
@@ -48,7 +48,22 @@ export default function App() {
           onOpenLeague={() => setTab('matches')}
         />
       )}
-      {tab === 'matches' && <Dashboard selectedLeague={selectedLeague} onChooseLeague={() => setTab('leagues')} />}
+      {tab === 'matches' && (
+        <Dashboard
+          selectedLeague={selectedLeague}
+          matchStatus="upcoming"
+          onLeagueSelected={setSelectedLeague}
+          onChooseLeague={() => setTab('leagues')}
+        />
+      )}
+      {tab === 'finished' && (
+        <Dashboard
+          selectedLeague={selectedLeague}
+          matchStatus="finished"
+          onLeagueSelected={setSelectedLeague}
+          onChooseLeague={() => setTab('leagues')}
+        />
+      )}
       {tab === 'leaderboard' && <LeaderboardPage selectedLeague={selectedLeague} onChooseLeague={() => setTab('leagues')} />}
       {tab === 'borrow' && <BorrowCoinsPage selectedLeague={selectedLeague} onChooseLeague={() => setTab('leagues')} />}
       {tab === 'results' && <ResultsPage />}

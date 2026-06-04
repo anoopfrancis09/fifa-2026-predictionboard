@@ -23,6 +23,67 @@ function errorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
+function MobileUserSelectPicker({
+  users,
+  selectedUserIds,
+  onAdd,
+  onRemove,
+  idPrefix,
+}: {
+  users: LeagueUserOption[];
+  selectedUserIds: string[];
+  onAdd: (userId: string) => void;
+  onRemove: (userId: string) => void;
+  idPrefix: string;
+}) {
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const selectableUsers = users.filter((user) => !user.is_me && !selectedUserIds.includes(user.user_id));
+  const selectedUsers = users.filter((user) => user.is_me || selectedUserIds.includes(user.user_id));
+
+  function addSelectedUser() {
+    if (!selectedUserId) return;
+    onAdd(selectedUserId);
+    setSelectedUserId('');
+  }
+
+  return (
+    <div className="mobile-user-select-picker">
+      <label className="field-label" htmlFor={`${idPrefix}-user-select`}>
+        Add user
+        <div className="mobile-user-select-row">
+          <select
+            id={`${idPrefix}-user-select`}
+            value={selectedUserId}
+            onChange={(event) => setSelectedUserId(event.target.value)}
+            disabled={selectableUsers.length === 0}
+          >
+            <option value="">{selectableUsers.length === 0 ? 'All users selected' : 'Choose a user'}</option>
+            {selectableUsers.map((user) => (
+              <option key={user.user_id} value={user.user_id}>{user.username}</option>
+            ))}
+          </select>
+          <button className="ghost-button dark" type="button" onClick={addSelectedUser} disabled={!selectedUserId}>
+            Add
+          </button>
+        </div>
+      </label>
+
+      <div className="selected-user-chip-list" aria-label="Selected users">
+        {selectedUsers.map((user) => (
+          <span key={user.user_id} className="selected-user-chip">
+            {user.username}{user.is_me ? ' (you)' : ''}
+            {!user.is_me && (
+              <button type="button" onClick={() => onRemove(user.user_id)} aria-label={`Remove ${user.username}`}>
+                ×
+              </button>
+            )}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function LeaguesPage({ selectedLeague, onLeagueSelected, onLeagueDeleted, onOpenLeague }: LeaguesPageProps) {
   const [leagues, setLeagues] = useState<League[]>([]);
   const [users, setUsers] = useState<LeagueUserOption[]>([]);
@@ -76,12 +137,28 @@ export function LeaguesPage({ selectedLeague, onLeagueSelected, onLeagueDeleted,
     ));
   }
 
+  function addAllowedUser(userId: string) {
+    setAllowedUserIds((current) => (current.includes(userId) ? current : [...current, userId]));
+  }
+
+  function removeAllowedUser(userId: string) {
+    setAllowedUserIds((current) => current.filter((id) => id !== userId));
+  }
+
   function toggleEditAllowedUser(userId: string) {
     setEditAllowedUserIds((current) => (
       current.includes(userId)
         ? current.filter((id) => id !== userId)
         : [...current, userId]
     ));
+  }
+
+  function addEditAllowedUser(userId: string) {
+    setEditAllowedUserIds((current) => (current.includes(userId) ? current : [...current, userId]));
+  }
+
+  function removeEditAllowedUser(userId: string) {
+    setEditAllowedUserIds((current) => current.filter((id) => id !== userId));
   }
 
   async function openSettings(league: League) {
@@ -266,19 +343,28 @@ export function LeaguesPage({ selectedLeague, onLeagueSelected, onLeagueDeleted,
             {users.length === 0 ? (
               <p className="muted-text">No users available yet.</p>
             ) : (
-              <div className="user-check-list">
-                {users.map((user) => (
-                  <label key={user.user_id} className="check-row">
-                    <input
-                      type="checkbox"
-                      checked={user.is_me || allowedUserIds.includes(user.user_id)}
-                      disabled={user.is_me}
-                      onChange={() => toggleAllowedUser(user.user_id)}
-                    />
-                    <span>{user.username}{user.is_me ? ' (you)' : ''}</span>
-                  </label>
-                ))}
-              </div>
+              <>
+                <div className="user-check-list">
+                  {users.map((user) => (
+                    <label key={user.user_id} className="check-row">
+                      <input
+                        type="checkbox"
+                        checked={user.is_me || allowedUserIds.includes(user.user_id)}
+                        disabled={user.is_me}
+                        onChange={() => toggleAllowedUser(user.user_id)}
+                      />
+                      <span>{user.username}{user.is_me ? ' (you)' : ''}</span>
+                    </label>
+                  ))}
+                </div>
+                <MobileUserSelectPicker
+                  users={users}
+                  selectedUserIds={allowedUserIds}
+                  onAdd={addAllowedUser}
+                  onRemove={removeAllowedUser}
+                  idPrefix="create-league"
+                />
+              </>
             )}
           </div>
         )}
@@ -378,19 +464,28 @@ export function LeaguesPage({ selectedLeague, onLeagueSelected, onLeagueDeleted,
                 ) : users.length === 0 ? (
                   <p className="muted-text">No users available yet.</p>
                 ) : (
-                  <div className="user-check-list">
-                    {users.map((user) => (
-                      <label key={user.user_id} className="check-row">
-                        <input
-                          type="checkbox"
-                          checked={user.is_me || editAllowedUserIds.includes(user.user_id)}
-                          disabled={user.is_me}
-                          onChange={() => toggleEditAllowedUser(user.user_id)}
-                        />
-                        <span>{user.username}{user.is_me ? ' (you)' : ''}</span>
-                      </label>
-                    ))}
-                  </div>
+                  <>
+                    <div className="user-check-list">
+                      {users.map((user) => (
+                        <label key={user.user_id} className="check-row">
+                          <input
+                            type="checkbox"
+                            checked={user.is_me || editAllowedUserIds.includes(user.user_id)}
+                            disabled={user.is_me}
+                            onChange={() => toggleEditAllowedUser(user.user_id)}
+                          />
+                          <span>{user.username}{user.is_me ? ' (you)' : ''}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <MobileUserSelectPicker
+                      users={users}
+                      selectedUserIds={editAllowedUserIds}
+                      onAdd={addEditAllowedUser}
+                      onRemove={removeEditAllowedUser}
+                      idPrefix="edit-league"
+                    />
+                  </>
                 )}
               </div>
             ) : (

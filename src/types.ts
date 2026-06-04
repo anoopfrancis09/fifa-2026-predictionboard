@@ -55,6 +55,16 @@ export interface MatchResultRow {
   is_me: boolean;
 }
 
+export interface MatchBidRow {
+  prediction_id: string;
+  user_id: string;
+  username: string;
+  choice: PredictionChoice;
+  amount: number;
+  created_at: string;
+  is_me: boolean;
+}
+
 export interface LeaderboardRow {
   user_id: string;
   username: string;

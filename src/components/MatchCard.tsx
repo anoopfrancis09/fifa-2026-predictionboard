@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { choiceLabel, choiceWeight, closeTime, formatDateTime, isBoardClosed, money, weightLabel } from '../lib/format';
-import type { Match, Prediction, PredictionChoice } from '../types';
+import type { Match, MatchBidRow, Prediction, PredictionChoice } from '../types';
 
 const choices: PredictionChoice[] = ['team_a', 'draw', 'team_b'];
 
@@ -130,6 +131,10 @@ export function MatchCard({
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [bidModalOpen, setBidModalOpen] = useState(false);
+  const [bidRows, setBidRows] = useState<MatchBidRow[]>([]);
+  const [bidListLoading, setBidListLoading] = useState(false);
+  const [bidListError, setBidListError] = useState<string | null>(null);
 
   const currentStake = prediction?.amount ?? 0;
   const availableForThisMatch = useMemo(() => Number(leagueBalance ?? 0) + currentStake, [leagueBalance, currentStake]);
@@ -167,11 +172,80 @@ export function MatchCard({
     }
   }
 
+  async function openBidList() {
+    setBidModalOpen(true);
+    setBidListLoading(true);
+    setBidListError(null);
+
+    try {
+      const { data, error: listError } = await supabase.rpc('get_locked_match_bid_list', {
+        p_league_id: leagueId,
+        p_match_id: match.id,
+      });
+
+      if (listError) throw listError;
+      setBidRows((data ?? []) as MatchBidRow[]);
+    } catch (err) {
+      setBidListError(err instanceof Error ? err.message : 'Could not load bid list.');
+    } finally {
+      setBidListLoading(false);
+    }
+  }
+
   const statusText = match.status === 'finished'
     ? 'Finished'
     : closed
       ? 'Closed'
       : 'Open';
+
+  const bidListModal = bidModalOpen ? createPortal(
+    <div className="modal-layer" role="presentation" onClick={() => setBidModalOpen(false)}>
+      <section
+        className="settings-modal bid-list-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={`bid-list-title-${match.id}`}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="settings-modal-header">
+          <div>
+            <p className="eyebrow">Locked bid list</p>
+            <h2 id={`bid-list-title-${match.id}`}>{match.team_a} vs {match.team_b}</h2>
+            <p className="muted-text">{formatDateTime(match.match_time)}</p>
+          </div>
+          <button className="menu-button close" type="button" onClick={() => setBidModalOpen(false)} aria-label="Close bid list">×</button>
+        </div>
+
+        {bidListLoading ? (
+          <p className="page-message">Loading bids...</p>
+        ) : bidListError ? (
+          <p className="error-text">{bidListError}</p>
+        ) : bidRows.length === 0 ? (
+          <p className="muted-text">No bids have been placed for this match yet.</p>
+        ) : (
+          <div className="bid-list-grid">
+            {bidRows.map((row) => (
+              <article key={row.prediction_id} className={`bid-list-row ${row.is_me ? 'is-me' : ''}`}>
+                <div>
+                  <strong>{row.username}{row.is_me ? ' (you)' : ''}</strong>
+                  <span>{formatDateTime(row.created_at)}</span>
+                </div>
+                <div>
+                  <span>Prediction</span>
+                  <strong>{choiceLabel(row.choice, match)}</strong>
+                </div>
+                <div>
+                  <span>Bid amount</span>
+                  <strong>{Number(row.amount).toLocaleString('en-AU')} coins</strong>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+    </div>,
+    document.body
+  ) : null;
 
   return (
     <article className={`match-card ${closed ? 'is-closed' : ''} ${prediction ? 'is-bidded' : ''}`}>
@@ -202,6 +276,12 @@ export function MatchCard({
           <span>Your prediction</span>
           <strong>{choiceLabel(prediction.choice, match)} • {prediction.amount +' coins'} • {weightLabel(choiceWeight(prediction.choice, match))}</strong>
         </div>
+      )}
+
+      {closed && (
+        <button className="ghost-button dark bid-list-button" type="button" onClick={openBidList}>
+          View bids
+        </button>
       )}
 
       {match.status === 'finished' ? (
@@ -284,6 +364,8 @@ export function MatchCard({
 
       {message && <p className="success-text">{message}</p>}
       {error && <p className="error-text">{error}</p>}
+
+      {bidListModal}
     </article>
   );
 }

@@ -77,9 +77,12 @@ export function Layout({
 
         <div className="screen active">
           <header className="mobile-header">
-            <button className="mobile-logout-button" type="button" onClick={signOut}>
-              Logout
-            </button>
+            <div className="mobile-header-actions">
+              <span className="mobile-header-user">{profile?.username}</span>
+              <button className="mobile-logout-button" type="button" onClick={signOut}>
+                Logout
+              </button>
+            </div>
             <h2>{mobileScreenMeta[activeTab].title}</h2>
             <p className="subtitle">{mobileScreenMeta[activeTab].subtitle}</p>
           </header>
@@ -87,7 +90,6 @@ export function Layout({
           <div className="mobile-balance-card">
             <div className="mobile-balance-header">
               <div>
-                <div className="mobile-user-name">{profile?.username}</div>
                 <div className="mobile-balance-label">{selectedLeague?.name ?? 'Prediction Board'}</div>
               </div>
               {/* <div className="mobile-user-icon">{'👤'}</div> */}

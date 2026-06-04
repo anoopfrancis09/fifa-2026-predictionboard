@@ -90,7 +90,7 @@ export function Layout({
                 <div className="mobile-user-name">{profile?.username}</div>
                 <div className="mobile-balance-label">{selectedLeague?.name ?? 'Prediction Board'}</div>
               </div>
-              <div className="mobile-user-icon">{profile?.role === 'admin' ? '⚙️' : '👤'}</div>
+              {/* <div className="mobile-user-icon">{'👤'}</div> */}
             </div>
             <BalanceBadge balance={profile?.balance ?? 0} owingBalance={profile?.owing_balance ?? 0} />
           </div>

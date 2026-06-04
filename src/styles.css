@@ -843,7 +843,7 @@ select:focus {
   align-items: center;
   gap: 10px;
   margin: 12px 0;
-  color: #333333;
+  color: #666464;
   font-weight: 700;
 }
 
@@ -1218,10 +1218,10 @@ tbody tr:hover {
   .mobile-header {
     position: relative;
     display: block;
-    padding: 20px 74px;
+    padding: 10px 74px;
     color: #ffffff;
     text-align: center;
-    background: linear-gradient(135deg, #00d9ff 0%, #0099cc 100%);
+    background: linear-gradient(135deg, #0e0f0f 0%, #636363 100%);
   }
 
   .mobile-logout-button {
@@ -1256,7 +1256,7 @@ tbody tr:hover {
     padding: 20px;
     color: #ffffff;
     border-radius: 15px;
-    background: linear-gradient(135deg, #00d9ff 0%, #0099cc 100%);
+    background: linear-gradient(135deg, #363738 0%, #427384 100%);
   }
 
   .mobile-balance-header {
@@ -1340,7 +1340,7 @@ tbody tr:hover {
 
   .section-heading.compact h2,
   .section-heading.compact .eyebrow {
-    color: #00d9ff;
+    color: #577176;
   }
 
   .page-message {
@@ -1741,7 +1741,7 @@ tbody tr:hover {
     display: grid;
     place-items: center;
     color: #ffffff;
-    background: #07c7e8;
+    /* background: #07c7e8; */
     border-radius: 50%;
     font-size: 15px;
     font-weight: 900;

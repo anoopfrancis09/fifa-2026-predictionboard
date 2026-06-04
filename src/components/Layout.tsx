@@ -47,6 +47,8 @@ export function Layout({
 }) {
   const { profile, signOut } = useAuth();
   const visibleItems = menuItems.filter((item) => !item.adminOnly || profile?.role === 'admin');
+  const isLeagueBalance = Boolean(selectedLeague);
+  const visibleBalance = isLeagueBalance ? selectedLeague?.wallet_balance ?? 0 : profile?.balance ?? 0;
   const initials = (profile?.username ?? 'User')
     .split(/[\s_-]+/)
     .map((part) => part[0])
@@ -94,7 +96,11 @@ export function Layout({
               </div>
               {/* <div className="mobile-user-icon">{'👤'}</div> */}
             </div>
-            <BalanceBadge balance={profile?.balance ?? 0} owingBalance={profile?.owing_balance ?? 0} />
+            <BalanceBadge
+              balance={visibleBalance}
+              owingBalance={isLeagueBalance ? undefined : profile?.owing_balance ?? 0}
+              label={isLeagueBalance ? 'League balance' : 'Balance'}
+            />
           </div>
 
           <div className="dashboard">
@@ -102,7 +108,11 @@ export function Layout({
               <div className="user-info">
                 <div className="user-avatar">{profile?.role === 'admin' ? '⚙️' : initials}</div>
                 <div className="user-name">{profile?.username}</div>
-                <BalanceBadge balance={profile?.balance ?? 0} owingBalance={profile?.owing_balance ?? 0} />
+                <BalanceBadge
+                  balance={visibleBalance}
+                  owingBalance={isLeagueBalance ? undefined : profile?.owing_balance ?? 0}
+                  label={isLeagueBalance ? 'League balance' : 'Balance'}
+                />
               </div>
 
               <ul className="sidebar-menu">

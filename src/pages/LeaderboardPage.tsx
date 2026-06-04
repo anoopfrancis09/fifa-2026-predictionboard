@@ -15,12 +15,6 @@ function formatPoints(value: number) {
   });
 }
 
-function owingTone(value: number) {
-  if (value < 0) return 'positive';
-  if (value > 0) return 'negative';
-  return 'neutral';
-}
-
 function rankMedal(index: number) {
   if (index === 0) return '🥇';
   if (index === 1) return '🥈';
@@ -91,7 +85,7 @@ export function LeaderboardPage({ selectedLeague, onChooseLeague }: { selectedLe
                   <div className="mobile-rank-medal">{rankMedal(index)}</div>
                   <div className="mobile-rank-info">
                     <strong>{row.username}{row.is_me ? ' (you)' : ''}</strong>
-                    <span>Total balance • Owing {formatCoins(row.owing_amount)}</span>
+                    <span>League balance</span>
                   </div>
                   <strong className="mobile-rank-points">{formatPoints(row.total_balance)}</strong>
                 </article>
@@ -103,17 +97,13 @@ export function LeaderboardPage({ selectedLeague, onChooseLeague }: { selectedLe
                 <thead>
                   <tr>
                     <th>User</th>
-                    {/* <th>Remaining coins</th> */}
-                    <th>Owing</th>
-                    <th>Total</th>
+                    <th>League balance</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((row) => (
                     <tr key={row.user_id} className={row.is_me ? 'me-row' : ''}>
                       <td>{row.username}{row.is_me ? ' (you)' : ''}</td>
-                      {/* <td className="coin-balance">{formatCoins(row.balance)} coins</td> */}
-                      <td className={owingTone(row.owing_amount)}>{formatCoins(row.owing_amount)}</td>
                       <td className="coin-balance">{formatCoins(row.total_balance)}</td>
                     </tr>
                   ))}

@@ -31,6 +31,7 @@ export interface Match {
 export interface Prediction {
   id: string;
   match_id: string;
+  league_id: string;
   user_id: string;
   choice: PredictionChoice;
   amount: number;
@@ -45,6 +46,7 @@ export interface MatchResultRow {
   prediction_id: string;
   user_id: string;
   username: string;
+  league_id: string;
   choice: PredictionChoice;
   choice_weight: number;
   amount: number | null;
@@ -71,6 +73,7 @@ export interface League {
   member_count: number;
   is_owner: boolean;
   is_member: boolean;
+  wallet_balance: number | null;
   created_at: string;
 }
 
@@ -95,6 +98,7 @@ export type BorrowRequestStatus = 'pending' | 'completed' | 'declined';
 
 export interface BorrowRequestRow {
   request_id: string;
+  league_id?: string | null;
   borrower_id: string;
   borrower_username: string;
   lender_id: string;

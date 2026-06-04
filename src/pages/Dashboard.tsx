@@ -29,7 +29,11 @@ export function Dashboard({
     setError(null);
 
     try {
-      const [{ data: matchesData, error: matchesError }, { data: predictionsData, error: predictionsError }] = await Promise.all([
+      const [
+        { data: matchesData, error: matchesError },
+        { data: predictionsData, error: predictionsError },
+        { data: walletData, error: walletError },
+      ] = await Promise.all([
         supabase
           .from('matches')
           .select('*')
@@ -38,20 +42,29 @@ export function Dashboard({
         supabase
           .from('predictions')
           .select('*')
-          .eq('user_id', profile.id),
+          .eq('user_id', profile.id)
+          .eq('league_id', selectedLeague.id),
+        supabase.rpc('get_my_league_wallet_balance', {
+          p_league_id: selectedLeague.id,
+        }),
       ]);
 
       if (matchesError) throw matchesError;
       if (predictionsError) throw predictionsError;
+      if (walletError) throw walletError;
 
       setMatches((matchesData ?? []) as Match[]);
       setPredictions((predictionsData ?? []) as Prediction[]);
+      const nextWalletBalance = Number(walletData ?? selectedLeague.wallet_balance ?? 0);
+      if (nextWalletBalance !== selectedLeague.wallet_balance) {
+        onLeagueSelected({ ...selectedLeague, wallet_balance: nextWalletBalance });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load matches.');
     } finally {
       setLoading(false);
     }
-  }, [profile, selectedLeague, matchStatus]);
+  }, [profile, selectedLeague?.id, selectedLeague?.wallet_balance, matchStatus, onLeagueSelected]);
 
   useEffect(() => {
     if (!profile || selectedLeague) {
@@ -142,9 +155,11 @@ export function Dashboard({
         <div className="match-grid">
           {matches.map((match) => (
             <MatchCard
-              key={match.id}
+              key={`${selectedLeague.id}:${match.id}`}
               match={match}
               prediction={predictionByMatch[match.id]}
+              leagueId={selectedLeague.id}
+              leagueBalance={selectedLeague.wallet_balance ?? 0}
               onChanged={load}
             />
           ))}

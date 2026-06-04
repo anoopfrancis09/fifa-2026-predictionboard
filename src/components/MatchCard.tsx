@@ -110,8 +110,20 @@ function coinResult(value: number | null | undefined) {
   })} coins`;
 }
 
-export function MatchCard({ match, prediction, onChanged }: { match: Match; prediction?: Prediction; onChanged: () => Promise<void> }) {
-  const { profile, refreshProfile } = useAuth();
+export function MatchCard({
+  match,
+  prediction,
+  leagueId,
+  leagueBalance,
+  onChanged,
+}: {
+  match: Match;
+  prediction?: Prediction;
+  leagueId: string;
+  leagueBalance: number;
+  onChanged: () => Promise<void>;
+}) {
+  const { profile } = useAuth();
   const closed = isBoardClosed(match);
   const [choice, setChoice] = useState<PredictionChoice>(prediction?.choice ?? 'team_a');
   const [amount, setAmount] = useState(prediction?.amount?.toString() ?? '');
@@ -120,7 +132,7 @@ export function MatchCard({ match, prediction, onChanged }: { match: Match; pred
   const [error, setError] = useState<string | null>(null);
 
   const currentStake = prediction?.amount ?? 0;
-  const availableForThisMatch = useMemo(() => (profile?.balance ?? 0) + currentStake, [profile?.balance, currentStake]);
+  const availableForThisMatch = useMemo(() => Number(leagueBalance ?? 0) + currentStake, [leagueBalance, currentStake]);
   const numericAmount = Number(amount || 0);
   const selectedWeight = choiceWeight(choice, match);
   const possibleReturn = numericAmount > 0 ? numericAmount * selectedWeight : 0;
@@ -138,6 +150,7 @@ export function MatchCard({ match, prediction, onChanged }: { match: Match; pred
       if (insufficientBalance) throw new Error(`You only have ${availableForThisMatch + ' coins'} available for this match.`);
 
       const { error: rpcError } = await supabase.rpc('place_prediction', {
+        p_league_id: leagueId,
         p_match_id: match.id,
         p_choice: choice,
         p_amount: numericAmount,
@@ -146,7 +159,6 @@ export function MatchCard({ match, prediction, onChanged }: { match: Match; pred
       if (rpcError) throw rpcError;
 
       setMessage('Prediction saved.');
-      await refreshProfile();
       await onChanged();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save prediction.');
@@ -220,7 +232,7 @@ export function MatchCard({ match, prediction, onChanged }: { match: Match; pred
         </div>
       ) : closed ? (
         <p className="warning-box">Prediction board is locked. You can only view your own prediction now.</p>
-      ) : (profile?.balance ?? 0) <= 0 && !prediction ? (
+      ) : leagueBalance <= 0 && !prediction ? (
         <p className="warning-box">Your balance is finished. You cannot bid on more matches.</p>
       ) : (
         <div className="prediction-form">

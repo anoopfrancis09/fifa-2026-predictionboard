@@ -1,6 +1,5 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
 import { formatDateTime } from '../lib/format';
 import type { BorrowRequestRow, BorrowUser, League } from '../types';
 
@@ -22,8 +21,15 @@ function statusLabel(status: BorrowRequestRow['status']) {
   }
 }
 
-export function BorrowCoinsPage({ selectedLeague, onChooseLeague }: { selectedLeague: League | null; onChooseLeague: () => void }) {
-  const { refreshProfile } = useAuth();
+export function BorrowCoinsPage({
+  selectedLeague,
+  onLeagueSelected,
+  onChooseLeague,
+}: {
+  selectedLeague: League | null;
+  onLeagueSelected: (league: League) => void;
+  onChooseLeague: () => void;
+}) {
   const [users, setUsers] = useState<BorrowUser[]>([]);
   const [requests, setRequests] = useState<BorrowRequestRow[]>([]);
   const [selectedLenderId, setSelectedLenderId] = useState('');
@@ -53,7 +59,9 @@ export function BorrowCoinsPage({ selectedLeague, onChooseLeague }: { selectedLe
       supabase.rpc('get_league_borrow_users', {
         p_league_id: selectedLeague.id,
       }),
-      supabase.rpc('get_coin_borrow_requests'),
+      supabase.rpc('get_coin_borrow_requests_in_league', {
+        p_league_id: selectedLeague.id,
+      }),
     ]);
 
     if (usersError || requestsError) {
@@ -65,12 +73,19 @@ export function BorrowCoinsPage({ selectedLeague, onChooseLeague }: { selectedLe
     const nextUsers = (usersData ?? []) as BorrowUser[];
     setUsers(nextUsers);
     setRequests((requestsData ?? []) as BorrowRequestRow[]);
+    const { data: walletBalance } = await supabase.rpc('get_my_league_wallet_balance', {
+      p_league_id: selectedLeague.id,
+    });
+    const nextWalletBalance = Number(walletBalance ?? selectedLeague.wallet_balance ?? 0);
+    if (nextWalletBalance !== selectedLeague.wallet_balance) {
+      onLeagueSelected({ ...selectedLeague, wallet_balance: nextWalletBalance });
+    }
     setSelectedLenderId((current) => {
       if (current && nextUsers.some((user) => user.user_id === current)) return current;
       return nextUsers[0]?.user_id || '';
     });
     setLoading(false);
-  }, [selectedLeague]);
+  }, [selectedLeague?.id, selectedLeague?.wallet_balance, onLeagueSelected]);
 
   useEffect(() => {
     load();
@@ -124,7 +139,6 @@ export function BorrowCoinsPage({ selectedLeague, onChooseLeague }: { selectedLe
       if (actionError) throw actionError;
 
       setMessage(action === 'approve' ? 'Coins transferred and request completed.' : 'Borrow request declined.');
-      await refreshProfile();
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not update borrow request.');
@@ -146,7 +160,6 @@ export function BorrowCoinsPage({ selectedLeague, onChooseLeague }: { selectedLe
       if (repayError) throw repayError;
 
       setMessage('Borrowed coins returned.');
-      await refreshProfile();
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not return borrowed coins.');

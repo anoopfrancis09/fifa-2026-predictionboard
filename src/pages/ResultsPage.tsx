@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { choiceLabel, formatDateTime, resultTone, weightLabel } from '../lib/format';
 import { useAuth } from '../context/AuthContext';
-import type { Match, MatchResultRow, Prediction } from '../types';
+import type { League, Match, MatchResultRow, Prediction } from '../types';
 
 function formatCoins(value: number | null | undefined) {
   return `${Number(value ?? 0).toLocaleString('en-AU', {
@@ -20,7 +20,7 @@ function formatSignedCoins(value: number | null | undefined) {
   })} coins`;
 }
 
-export function ResultsPage() {
+export function ResultsPage({ selectedLeague, onChooseLeague }: { selectedLeague: League | null; onChooseLeague: () => void }) {
   const { profile } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
   const [selectedMatchId, setSelectedMatchId] = useState('');
@@ -33,6 +33,7 @@ export function ResultsPage() {
   const selectedPrediction = selectedMatch ? predictionByMatch[selectedMatch.id] : undefined;
 
   const loadMatches = useCallback(async () => {
+    if (!selectedLeague) return;
     setLoading(true);
     setError(null);
     const { data, error: matchesError } = await supabase
@@ -55,6 +56,7 @@ export function ResultsPage() {
         .from('predictions')
         .select('*')
         .eq('user_id', profile.id)
+        .eq('league_id', selectedLeague.id)
         .in('match_id', finishedMatches.map((match) => match.id));
 
       if (predictionError) {
@@ -75,13 +77,14 @@ export function ResultsPage() {
       setSelectedMatchId(finishedMatches[0].id);
     }
     setLoading(false);
-  }, [profile, selectedMatchId]);
+  }, [profile, selectedLeague, selectedMatchId]);
 
   const loadResults = useCallback(async (matchId: string) => {
-    if (!matchId) return;
+    if (!matchId || !selectedLeague) return;
     setError(null);
     const { data, error: resultError } = await supabase.rpc('get_match_results', {
       p_match_id: matchId,
+      p_league_id: selectedLeague.id,
     });
 
     if (resultError) {
@@ -90,7 +93,7 @@ export function ResultsPage() {
     }
 
     setRows((data ?? []) as MatchResultRow[]);
-  }, []);
+  }, [selectedLeague]);
 
   useEffect(() => {
     loadMatches();
@@ -100,6 +103,16 @@ export function ResultsPage() {
     loadResults(selectedMatchId);
   }, [selectedMatchId, loadResults]);
 
+  if (!selectedLeague) {
+    return (
+      <div className="empty-state">
+        <strong>Choose a league first.</strong>
+        <p>Results are calculated from predictions inside a league.</p>
+        <button className="primary-button" onClick={onChooseLeague}>View leagues</button>
+      </div>
+    );
+  }
+
   if (loading) return <p className="page-message">Loading results…</p>;
 
   return (
@@ -107,7 +120,7 @@ export function ResultsPage() {
       <div className="section-heading">
         <div>
           <p className="eyebrow">Settled matches</p>
-          <h2>Results and payouts</h2>
+          <h2>{selectedLeague.name}</h2>
         </div>
         <button className="ghost-button dark" onClick={loadMatches}>Refresh</button>
       </div>

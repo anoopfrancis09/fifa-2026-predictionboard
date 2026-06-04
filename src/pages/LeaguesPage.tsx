@@ -437,6 +437,9 @@ function LeagueCard({
         Created by {league.created_by_username} on {formatDateTime(league.created_at)}
       </p>
       <p className="muted-text">{league.member_count} member{league.member_count === 1 ? '' : 's'}</p>
+      {league.is_member && (
+        <p className="muted-text">League balance: {Number(league.wallet_balance ?? 0).toLocaleString('en-AU')} coins</p>
+      )}
       <div className="league-card-actions">
         <button className={league.is_member ? 'primary-button' : 'ghost-button dark'} onClick={onAction} disabled={disabled}>
           {actionLabel}

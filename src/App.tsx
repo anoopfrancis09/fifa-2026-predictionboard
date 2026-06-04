@@ -65,8 +65,14 @@ export default function App() {
         />
       )}
       {tab === 'leaderboard' && <LeaderboardPage selectedLeague={selectedLeague} onChooseLeague={() => setTab('leagues')} />}
-      {tab === 'borrow' && <BorrowCoinsPage selectedLeague={selectedLeague} onChooseLeague={() => setTab('leagues')} />}
-      {tab === 'results' && <ResultsPage />}
+      {tab === 'borrow' && (
+        <BorrowCoinsPage
+          selectedLeague={selectedLeague}
+          onLeagueSelected={setSelectedLeague}
+          onChooseLeague={() => setTab('leagues')}
+        />
+      )}
+      {tab === 'results' && <ResultsPage selectedLeague={selectedLeague} onChooseLeague={() => setTab('leagues')} />}
       {tab === 'admin' && <AdminPage />}
     </Layout>
   );

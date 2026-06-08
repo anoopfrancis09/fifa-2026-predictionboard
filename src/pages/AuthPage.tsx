@@ -35,7 +35,7 @@ export function AuthPage() {
       <section className="auth-panel screen active">
         <div className="login-container">
           <div className="logo-section">
-            <div className="logo">🏆</div>
+            <div className="logo">26</div>
             <h2>FIFA 2026</h2>
             <p>World Cup Predictions</p>
           </div>

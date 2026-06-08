@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">FIFA Prediction Board</string>
+    <string name="title_activity_main">FIFA Prediction Board</string>
+    <string name="package_name">com.fifaprediction.board</string>
+    <string name="custom_url_scheme">com.fifaprediction.board</string>
+</resources>

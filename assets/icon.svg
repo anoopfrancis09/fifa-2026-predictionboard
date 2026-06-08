@@ -1,0 +1,47 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" id="mainIcon">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="ballGradient" x1="20%" y1="20%" x2="80%" y2="80%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e0e0e0;stop-opacity:1" />
+    </linearGradient>
+
+    <radialGradient id="glowGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0" />
+    </radialGradient>
+
+    <linearGradient id="trophyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffd700;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffA500;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <rect width="256" height="256" rx="55" ry="55" fill="url(#bgGradient)" />
+  <circle cx="128" cy="128" r="100" fill="url(#glowGradient)" />
+
+  <circle cx="128" cy="110" r="55" fill="url(#ballGradient)" />
+  <path d="M 128 65 L 143 85 L 133 105 L 113 105 L 103 85 Z" fill="#667eea" opacity="0.7" />
+  <path d="M 143 85 L 163 90 L 158 110 L 133 105 Z" fill="#667eea" opacity="0.5" />
+  <path d="M 103 85 L 93 90 L 98 110 L 113 105 Z" fill="#667eea" opacity="0.5" />
+  <path d="M 133 105 L 158 110 L 148 130 L 128 125 Z" fill="#667eea" opacity="0.6" />
+  <path d="M 113 105 L 98 110 L 108 130 L 128 125 Z" fill="#667eea" opacity="0.6" />
+  <path d="M 128 125 L 148 130 L 138 145 L 118 145 L 108 130 Z" fill="#667eea" opacity="0.7" />
+
+  <g transform="translate(155, 135)">
+    <path d="M 0 0 L -8 0 L -8 -5 L -10 -5 L -10 -15 L 10 -15 L 10 -5 L 8 -5 L 8 0 Z" fill="url(#trophyGradient)" />
+    <ellipse cx="0" cy="-15" rx="10" ry="3" fill="#ffd700" />
+    <rect x="-12" y="0" width="24" height="6" rx="2" fill="url(#trophyGradient)" />
+    <circle cx="0" cy="-20" r="2" fill="#ffd700" />
+  </g>
+
+  <text x="128" y="195" font-family="Arial, sans-serif" font-size="32" font-weight="bold" text-anchor="middle" fill="#ffffff">2026</text>
+
+  <path d="M 45 50 L 48 58 L 56 58 L 50 63 L 52 71 L 45 66 L 38 71 L 40 63 L 34 58 L 42 58 Z" fill="#ffd700" opacity="0.6" />
+  <path d="M 211 50 L 214 58 L 222 58 L 216 63 L 218 71 L 211 66 L 204 71 L 206 63 L 200 58 L 208 58 Z" fill="#ffd700" opacity="0.6" />
+  <ellipse cx="110" cy="90" rx="15" ry="10" fill="#ffffff" opacity="0.3" />
+</svg>

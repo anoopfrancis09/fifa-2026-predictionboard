@@ -1,5 +1,5 @@
 :root {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
   color: #333333;
   background: #1e3c72;
   font-synthesis: none;
@@ -19,6 +19,15 @@
   --soft: #f8f9fa;
   --line: #e0e0e0;
   --shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+}
+
+.emoji-icon,
+.team-flag,
+.mobile-rank-medal,
+.mobile-user-icon,
+.trophy-icon {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-variant-emoji: emoji;
 }
 
 * {
@@ -48,6 +57,14 @@ button {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.62;
+}
+
+.app-icon {
+  width: 1.15em;
+  height: 1.15em;
+  display: inline-block;
+  flex: 0 0 auto;
+  color: currentColor;
 }
 
 .app-shell {
@@ -1949,7 +1966,7 @@ tbody tr:hover {
   }
 
   .leaderboard-table td:first-child::before {
-    content: "🏆";
+    content: "#";
     display: inline-grid;
     place-items: center;
     width: 32px;
@@ -2093,8 +2110,9 @@ tbody tr:hover {
   }
 
   .modal-layer {
-  place-items: flex-start;
-}
+    place-items: center;
+    padding: calc(16px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom));
+  }
 
   .settings-actions {
     position: static;
@@ -2155,6 +2173,128 @@ tbody tr:hover {
   th,
   td {
     padding: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  html.capacitor-ios .primary-button,
+  html.capacitor-ios .ghost-button,
+  html.capacitor-ios .danger-button,
+  html.capacitor-ios .link-button,
+  html.capacitor-ios .choice,
+  html.capacitor-ios .mobile-nav-tab,
+  html.capacitor-ios .mobile-burger-button,
+  html.capacitor-ios .mobile-menu-close,
+  html.capacitor-ios .mobile-menu-item,
+  html.capacitor-ios .league-card-actions button,
+  html.capacitor-ios .settings-actions button,
+  html.capacitor-ios .selected-user-chip button,
+  html.capacitor-ios .result-match-list button {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background:
+      radial-gradient(circle at 22% 12%, rgba(255, 255, 255, 0.55), transparent 0.9rem),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.07)),
+      rgba(102, 126, 234, 0.28);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.08),
+      0 10px 28px rgba(18, 24, 48, 0.28);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    backdrop-filter: blur(18px) saturate(180%);
+    transform: translateZ(0);
+    transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, border-color 160ms ease;
+  }
+
+  html.capacitor-ios .primary-button,
+  html.capacitor-ios .choice.active,
+  html.capacitor-ios .mobile-nav-tab.active,
+  html.capacitor-ios .ghost-button.dark.bid-list-button {
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.28);
+    background:
+      radial-gradient(circle at 18% 8%, rgba(255, 255, 255, 0.62), transparent 1rem),
+      radial-gradient(circle at 86% 100%, rgba(240, 147, 251, 0.36), transparent 2.8rem),
+      linear-gradient(135deg, rgba(102, 126, 234, 0.92), rgba(118, 75, 162, 0.86));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.36),
+      inset 0 -10px 22px rgba(31, 39, 73, 0.28),
+      0 14px 34px rgba(102, 126, 234, 0.34);
+  }
+
+  html.capacitor-ios .ghost-button,
+  html.capacitor-ios .link-button,
+  html.capacitor-ios .choice,
+  html.capacitor-ios .mobile-nav-tab,
+  html.capacitor-ios .mobile-burger-button,
+  html.capacitor-ios .mobile-menu-close {
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  html.capacitor-ios .danger-button,
+  html.capacitor-ios .mobile-menu-item.danger {
+    background:
+      radial-gradient(circle at 20% 12%, rgba(255, 255, 255, 0.44), transparent 1rem),
+      linear-gradient(135deg, rgba(231, 76, 60, 0.34), rgba(118, 75, 162, 0.14)),
+      rgba(255, 255, 255, 0.08);
+    border-color: rgba(231, 76, 60, 0.26);
+  }
+
+  html.capacitor-ios .mobile-menu-item,
+  html.capacitor-ios .result-match-list button {
+    background:
+      radial-gradient(circle at 16% 8%, rgba(255, 255, 255, 0.28), transparent 1rem),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)),
+      rgba(45, 53, 97, 0.72);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.16),
+      0 12px 26px rgba(0, 0, 0, 0.18);
+  }
+
+  html.capacitor-ios .primary-button::before,
+  html.capacitor-ios .ghost-button::before,
+  html.capacitor-ios .danger-button::before,
+  html.capacitor-ios .link-button::before,
+  html.capacitor-ios .choice::before,
+  html.capacitor-ios .mobile-nav-tab::before,
+  html.capacitor-ios .mobile-burger-button::before,
+  html.capacitor-ios .mobile-menu-close::before,
+  html.capacitor-ios .mobile-menu-item::before,
+  html.capacitor-ios .league-card-actions button::before,
+  html.capacitor-ios .settings-actions button::before,
+  html.capacitor-ios .selected-user-chip button::before,
+  html.capacitor-ios .result-match-list button::before {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    pointer-events: none;
+    border-radius: inherit;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.26), transparent 44%);
+    opacity: 0.95;
+  }
+
+  html.capacitor-ios .primary-button:active:not(:disabled),
+  html.capacitor-ios .ghost-button:active:not(:disabled),
+  html.capacitor-ios .danger-button:active:not(:disabled),
+  html.capacitor-ios .link-button:active:not(:disabled),
+  html.capacitor-ios .choice:active:not(:disabled),
+  html.capacitor-ios .mobile-nav-tab:active:not(:disabled),
+  html.capacitor-ios .mobile-burger-button:active:not(:disabled),
+  html.capacitor-ios .mobile-menu-close:active:not(:disabled),
+  html.capacitor-ios .mobile-menu-item:active:not(:disabled),
+  html.capacitor-ios .league-card-actions button:active:not(:disabled),
+  html.capacitor-ios .settings-actions button:active:not(:disabled),
+  html.capacitor-ios .selected-user-chip button:active:not(:disabled),
+  html.capacitor-ios .result-match-list button:active:not(:disabled) {
+    transform: scale(0.98) translateZ(0);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      0 5px 14px rgba(18, 24, 48, 0.24);
+  }
+
+  html.capacitor-ios button:disabled {
+    filter: saturate(0.7);
   }
 }
 
@@ -2330,7 +2470,7 @@ tbody tr:hover {
   .mobile-header {
     display: block;
     margin: 0 0 16px;
-    padding: 16px;
+    padding: calc(16px + env(safe-area-inset-top)) 16px 16px;
     color: #ffffff;
     text-align: left;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -2365,6 +2505,11 @@ tbody tr:hover {
     background: rgba(255, 255, 255, 0.2);
     border-radius: 8px;
     font-size: 16px;
+  }
+
+  .mobile-brand-icon .app-icon {
+    width: 18px;
+    height: 18px;
   }
 
   .mobile-burger-button,
@@ -2433,6 +2578,11 @@ tbody tr:hover {
     border-radius: 12px;
     font-size: 15px;
     font-weight: 900;
+  }
+
+  .mobile-user-avatar .app-icon {
+    width: 21px;
+    height: 21px;
   }
 
   .mobile-user-name {
@@ -2544,7 +2694,7 @@ tbody tr:hover {
     width: min(88vw, 360px);
     height: 100dvh;
     overflow-y: auto;
-    padding: 16px;
+    padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
     color: #ffffff;
     background: #1a1a2e;
     border-left: 1px solid rgba(255, 255, 255, 0.08);
@@ -2631,7 +2781,16 @@ tbody tr:hover {
   }
 
   .mobile-menu-icon {
-    font-size: 20px;
+    width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .mobile-menu-icon .app-icon {
+    width: 20px;
+    height: 20px;
   }
 
   .mobile-menu-item strong,
@@ -2987,5 +3146,20 @@ tbody tr:hover {
     color: #a0aec0;
     background: #1a1a2e;
     text-transform: uppercase;
+  }
+
+  input,
+  select,
+  textarea,
+  .form-input {
+    font-size: 16px;
+  }
+
+  html,
+  body,
+  #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 }

@@ -149,7 +149,7 @@ export function MatchCard({
     try {
       if (!profile) throw new Error('You must be logged in.');
       if (numericAmount <= 0) throw new Error('Enter a bid greater than $0.');
-      if (insufficientBalance) throw new Error(`You only have ${availableForThisMatch + ' coins'} available for this match.`);
+      if (insufficientBalance) throw new Error(`You only have ${availableForThisMatch + ' league coins'} available for this match.`);
 
       const { error: rpcError } = await supabase.rpc('place_prediction', {
         p_league_id: leagueId,
@@ -241,7 +241,7 @@ export function MatchCard({
       ) : closed ? (
         <p className="warning-box">Prediction board is locked. You can only view your own prediction now.</p>
       ) : leagueBalance <= 0 && !prediction ? (
-        <p className="warning-box">Your balance is finished. You cannot bid on more matches.</p>
+        <p className="warning-box">Your league balance is finished. You cannot bid on more matches in this league.</p>
       ) : (
         <div className="prediction-form">
           <div className="choice-grid" role="radiogroup" aria-label="Prediction outcome">
@@ -281,7 +281,7 @@ export function MatchCard({
 
           <div className="form-footer">
             <span className={insufficientBalance ? 'negative' : 'muted-text'}>
-              Available for this match: {availableForThisMatch + ' coins'}
+              Available in this league: {availableForThisMatch + ' coins'}
             </span>
             <button className="primary-button" onClick={submitPrediction} disabled={saving || insufficientBalance}>
               {saving ? 'Saving…' : prediction ? 'Update bid' : 'Place bid'}

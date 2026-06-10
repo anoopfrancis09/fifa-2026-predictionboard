@@ -6,8 +6,6 @@ export interface Profile {
   id: string;
   username: string;
   role: ProfileRole;
-  balance: number;
-  owing_balance: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -101,7 +99,7 @@ export interface LeaguePrivateUser {
 export interface BorrowUser {
   user_id: string;
   username: string;
-  balance: number;
+  wallet_balance: number;
 }
 
 export type BorrowRequestStatus = 'pending' | 'completed' | 'declined';
@@ -114,6 +112,7 @@ export interface BorrowRequestRow {
   lender_id: string;
   lender_username: string;
   amount: number;
+  owed_amount: number;
   repaid_amount: number;
   outstanding_amount: number;
   status: BorrowRequestStatus;

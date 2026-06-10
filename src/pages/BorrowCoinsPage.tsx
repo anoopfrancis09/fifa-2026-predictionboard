@@ -10,6 +10,16 @@ function formatCoins(value: number) {
   });
 }
 
+function formatInputAmount(value: number) {
+  if (!Number.isFinite(value) || value <= 0) return '';
+  return Number(value.toFixed(2)).toString();
+}
+
+function defaultOwedAmount(value: string) {
+  const numericAmount = Number(value || 0);
+  return formatInputAmount(numericAmount * 1.5);
+}
+
 function statusLabel(status: BorrowRequestRow['status']) {
   switch (status) {
     case 'completed':
@@ -34,6 +44,8 @@ export function BorrowCoinsPage({
   const [requests, setRequests] = useState<BorrowRequestRow[]>([]);
   const [selectedLenderId, setSelectedLenderId] = useState('');
   const [amount, setAmount] = useState('');
+  const [owedAmount, setOwedAmount] = useState('');
+  const [owedAmountEdited, setOwedAmountEdited] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [actionRequestId, setActionRequestId] = useState<string | null>(null);
@@ -91,6 +103,18 @@ export function BorrowCoinsPage({
     load();
   }, [load]);
 
+  function handleAmountChange(value: string) {
+    setAmount(value);
+    if (!owedAmountEdited) {
+      setOwedAmount(defaultOwedAmount(value));
+    }
+  }
+
+  function handleOwedAmountChange(value: string) {
+    setOwedAmountEdited(true);
+    setOwedAmount(value);
+  }
+
   async function sendRequest(event: FormEvent) {
     event.preventDefault();
     setSaving(true);
@@ -99,10 +123,17 @@ export function BorrowCoinsPage({
 
     try {
       const numericAmount = Number(amount || 0);
+      const numericOwedAmount = Number(owedAmount || 0);
 
       if (!selectedLenderId) throw new Error('Select a user to borrow from.');
       if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
         throw new Error('Enter an amount greater than 0.');
+      }
+      if (!Number.isFinite(numericOwedAmount) || numericOwedAmount <= 0) {
+        throw new Error('Enter an amount to return greater than 0.');
+      }
+      if (numericOwedAmount < numericAmount) {
+        throw new Error('Amount to return cannot be less than the borrowed amount.');
       }
 
       if (!selectedLeague) throw new Error('Choose a league first.');
@@ -111,11 +142,14 @@ export function BorrowCoinsPage({
         p_league_id: selectedLeague.id,
         p_lender_id: selectedLenderId,
         p_amount: numericAmount,
+        p_owed_amount: numericOwedAmount,
       });
 
       if (requestError) throw requestError;
 
       setAmount('');
+      setOwedAmount('');
+      setOwedAmountEdited(false);
       setMessage('Borrow request sent.');
       await load();
     } catch (err) {
@@ -201,17 +235,31 @@ export function BorrowCoinsPage({
           </select>
         </label>
 
-        <label className="field-label">
-          Amount
-          <input
-            type="number"
-            min="1"
-            step="0.01"
-            value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-            placeholder="e.g. 10"
-          />
-        </label>
+        <div className="borrow-amount-fields">
+          <label className="field-label">
+            Amount
+            <input
+              type="number"
+              min="1"
+              step="0.01"
+              value={amount}
+              onChange={(event) => handleAmountChange(event.target.value)}
+              placeholder="e.g. 10"
+            />
+          </label>
+
+          <label className="field-label">
+            Amount to return
+            <input
+              type="number"
+              min="1"
+              step="0.01"
+              value={owedAmount}
+              onChange={(event) => handleOwedAmountChange(event.target.value)}
+              placeholder="1.5x by default"
+            />
+          </label>
+        </div>
 
         <button className="primary-button full-width" disabled={saving || users.length === 0}>
           {saving ? 'Sending…' : 'Send request'}
@@ -238,7 +286,7 @@ export function BorrowCoinsPage({
               <div className="borrow-request-row" key={request.request_id}>
                 <div>
                   <strong>{request.lender_username}</strong>
-                  <span>Owing {formatCoins(request.outstanding_amount)} coins from {formatCoins(request.amount)} borrowed.</span>
+                  <span>Owing {formatCoins(request.outstanding_amount)} coins for {formatCoins(request.amount)} borrowed.</span>
                 </div>
                 <button
                   className="primary-button"
@@ -269,7 +317,9 @@ export function BorrowCoinsPage({
                 <div className="borrow-request-row" key={request.request_id}>
                   <div>
                     <strong>{request.borrower_username}</strong>
-                    <span>Requested {formatCoins(request.amount)} coins on {formatDateTime(request.requested_at)}</span>
+                    <span>
+                      Requested {formatCoins(request.amount)} coins and will return {formatCoins(request.owed_amount)} on {formatDateTime(request.requested_at)}
+                    </span>
                   </div>
                   <div className="admin-actions">
                     <button
@@ -307,6 +357,7 @@ export function BorrowCoinsPage({
                     <th>Borrower</th>
                     <th>Lender</th>
                     <th>Amount</th>
+                    <th>Owed</th>
                     <th>Outstanding</th>
                     <th>Status</th>
                     <th>Requested</th>
@@ -318,6 +369,7 @@ export function BorrowCoinsPage({
                       <td>{request.borrower_username}{request.is_outgoing ? ' (you)' : ''}</td>
                       <td>{request.lender_username}{request.is_incoming ? ' (you)' : ''}</td>
                       <td className="coin-balance">{formatCoins(request.amount)} coins</td>
+                      <td className="coin-balance">{formatCoins(request.owed_amount)} coins</td>
                       <td className={request.outstanding_amount > 0 ? 'negative' : 'neutral'}>{formatCoins(request.outstanding_amount)} coins</td>
                       <td>
                         <span className={`borrow-status ${request.status}`}>{statusLabel(request.status)}</span>

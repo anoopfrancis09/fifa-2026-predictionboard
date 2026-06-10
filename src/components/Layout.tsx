@@ -152,8 +152,7 @@ export function Layout({
   const { profile, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const visibleItems = menuItems.filter((item) => !item.adminOnly || profile?.role === 'admin');
-  const isLeagueBalance = Boolean(selectedLeague);
-  const visibleBalance = isLeagueBalance ? selectedLeague?.wallet_balance ?? 0 : profile?.balance ?? 0;
+  const visibleBalance = selectedLeague?.wallet_balance ?? 0;
   const initials = (profile?.username ?? 'User')
     .split(/[\s_-]+/)
     .map((part) => part[0])
@@ -210,11 +209,7 @@ export function Layout({
                   <div className="mobile-balance-label">{selectedLeague?.name ?? activeMeta.subtitle}</div>
                 </div>
               </div>
-              <BalanceBadge
-                balance={visibleBalance}
-                owingBalance={isLeagueBalance ? undefined : profile?.owing_balance ?? 0}
-                label={isLeagueBalance ? 'League balance' : 'Balance'}
-              />
+              {selectedLeague && <BalanceBadge balance={visibleBalance} label="League balance" />}
             </div>
 
             <div className="mobile-nav-tabs" role="tablist" aria-label="Mobile quick navigation">
@@ -264,7 +259,7 @@ export function Layout({
                     <span className="mobile-menu-icon"><AppIcon name={item.tab} /></span>
                     <span>
                       <strong>{item.label}</strong>
-                      <small>{item.tab === 'leagues' ? 'Manage active leagues' : item.tab === 'borrow' ? 'Request or return coins' : 'Open section'}</small>
+                      <small>{item.tab === 'leagues' ? 'Manage active leagues' : item.tab === 'borrow' ? 'Request or return league coins' : 'Open section'}</small>
                     </span>
                     <span className="mobile-menu-arrow">→</span>
                   </button>
@@ -288,11 +283,7 @@ export function Layout({
               <div className="user-info">
                 <div className="user-avatar">{profile?.role === 'admin' ? 'AD' : initials}</div>
                 <div className="user-name">{profile?.username}</div>
-                <BalanceBadge
-                  balance={visibleBalance}
-                  owingBalance={isLeagueBalance ? undefined : profile?.owing_balance ?? 0}
-                  label={isLeagueBalance ? 'League balance' : 'Balance'}
-                />
+                {selectedLeague && <BalanceBadge balance={visibleBalance} label="League balance" />}
               </div>
 
               <ul className="sidebar-menu">

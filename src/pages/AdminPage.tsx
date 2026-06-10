@@ -348,6 +348,7 @@ export function AdminPage() {
                     <th>Borrower</th>
                     <th>Lender</th>
                     <th>Amount</th>
+                    <th>Owed</th>
                     <th>Outstanding</th>
                     <th>Status</th>
                     <th>Requested</th>
@@ -360,6 +361,7 @@ export function AdminPage() {
                       <td>{request.borrower_username}</td>
                       <td>{request.lender_username}</td>
                       <td className="coin-balance">{formatCoins(request.amount)} coins</td>
+                      <td className="coin-balance">{formatCoins(request.owed_amount)} coins</td>
                       <td className={request.outstanding_amount > 0 ? 'negative' : 'neutral'}>{formatCoins(request.outstanding_amount)} coins</td>
                       <td><span className={`borrow-status ${request.status}`}>{request.status}</span></td>
                       <td>{formatDateTime(request.requested_at)}</td>

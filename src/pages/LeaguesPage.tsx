@@ -7,7 +7,7 @@ type LeaguesPageProps = {
   selectedLeague: League | null;
   onLeagueSelected: (league: League) => void;
   onLeagueDeleted: (leagueId: string) => void;
-  onOpenLeague: () => void;
+  onOpenLeague: (league: League) => void;
 };
 
 function firstLeague(value: unknown): League | null {
@@ -311,8 +311,7 @@ export function LeaguesPage({ selectedLeague, onLeagueSelected, onLeagueDeleted,
   }
 
   function openLeague(league: League) {
-    onLeagueSelected(league);
-    onOpenLeague();
+    onOpenLeague(league);
   }
 
   if (loading) return <p className="page-message">Loading leagues...</p>;

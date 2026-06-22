@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { LeagueSelectionGate } from '../components/LeagueSelectionGate';
 import { supabase } from '../lib/supabase';
 import type { League, LeaderboardRow } from '../types';
 
@@ -22,7 +23,17 @@ function rankMedal(index: number) {
   return index + 1;
 }
 
-export function LeaderboardPage({ selectedLeague, onChooseLeague }: { selectedLeague: League | null; onChooseLeague: () => void }) {
+export function LeaderboardPage({
+  selectedLeague,
+  onLeagueSelected,
+  onChooseLeague,
+  onChangeLeague,
+}: {
+  selectedLeague: League | null;
+  onLeagueSelected: (league: League) => void;
+  onChooseLeague: () => void;
+  onChangeLeague: () => void;
+}) {
   const [rows, setRows] = useState<LeaderboardRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,11 +63,15 @@ export function LeaderboardPage({ selectedLeague, onChooseLeague }: { selectedLe
 
   if (!selectedLeague) {
     return (
-      <div className="empty-state">
-        <strong>Choose a league first.</strong>
-        <p>Leaderboards are calculated from users inside a league.</p>
-        <button className="primary-button" onClick={onChooseLeague}>View leagues</button>
-      </div>
+      <LeagueSelectionGate
+        title="Select a league for the leaderboard"
+        description="Leaderboard rankings are calculated inside the league you choose."
+        actionLabel="View leaderboard"
+        emptyTitle="Join a league first."
+        emptyDescription="Join or create a league, then come back here to view its leaderboard."
+        onLeagueSelected={onLeagueSelected}
+        onChooseLeague={onChooseLeague}
+      />
     );
   }
 
@@ -69,7 +84,10 @@ export function LeaderboardPage({ selectedLeague, onChooseLeague }: { selectedLe
           <p className="eyebrow">Leaderboard</p>
           <h2>{selectedLeague.name}</h2>
         </div>
-        <button className="ghost-button dark" onClick={load}>Refresh</button>
+        <div className="section-actions">
+          <button className="ghost-button dark" type="button" onClick={onChangeLeague}>Change league</button>
+          <button className="ghost-button dark" type="button" onClick={load}>Refresh</button>
+        </div>
       </div>
 
       <div className="panel-card wide">

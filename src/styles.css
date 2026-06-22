@@ -273,6 +273,22 @@ button:disabled {
   margin-bottom: 24px;
 }
 
+.section-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.league-choice-panel .section-heading .muted-text {
+  margin: 0;
+}
+
+.league-choice-card {
+  min-height: 240px;
+}
+
 .section-heading h2,
 .content-header h2,
 .result-header h2,

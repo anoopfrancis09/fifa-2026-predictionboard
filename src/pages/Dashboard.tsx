@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MatchCard } from '../components/MatchCard';
+import { LeagueSelectionGate } from '../components/LeagueSelectionGate';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { choiceLabel, formatDateTime } from '../lib/format';
@@ -90,18 +91,18 @@ export function Dashboard({
   matchStatus,
   onLeagueSelected,
   onChooseLeague,
+  onChangeLeague,
 }: {
   selectedLeague: League | null;
   matchStatus: MatchStatus;
   onLeagueSelected: (league: League) => void;
   onChooseLeague: () => void;
+  onChangeLeague: () => void;
 }) {
   const { profile } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [checkingLeagues, setCheckingLeagues] = useState(false);
-  const [hasJoinedLeague, setHasJoinedLeague] = useState<boolean | null>(null);
   const [bidListMatch, setBidListMatch] = useState<Match | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -149,46 +150,6 @@ export function Dashboard({
   }, [profile, selectedLeague?.id, selectedLeague?.wallet_balance, matchStatus, onLeagueSelected]);
 
   useEffect(() => {
-    if (!profile || selectedLeague) {
-      setCheckingLeagues(false);
-      setHasJoinedLeague(selectedLeague ? true : null);
-      return;
-    }
-
-    let ignore = false;
-
-    async function selectJoinedLeague() {
-      setCheckingLeagues(true);
-      setError(null);
-
-      try {
-        const { data, error: leaguesError } = await supabase.rpc('get_visible_leagues');
-        if (leaguesError) throw leaguesError;
-
-        if (ignore) return;
-
-        const joinedLeague = ((data ?? []) as League[]).find((league) => league.is_member);
-        if (joinedLeague) {
-          setHasJoinedLeague(true);
-          onLeagueSelected(joinedLeague);
-        } else {
-          setHasJoinedLeague(false);
-        }
-      } catch (err) {
-        if (!ignore) setError(err instanceof Error ? err.message : 'Could not check your leagues.');
-      } finally {
-        if (!ignore) setCheckingLeagues(false);
-      }
-    }
-
-    selectJoinedLeague();
-
-    return () => {
-      ignore = true;
-    };
-  }, [profile, selectedLeague, onLeagueSelected]);
-
-  useEffect(() => {
     load();
   }, [load]);
 
@@ -204,16 +165,17 @@ export function Dashboard({
   }, [predictions]);
 
   if (!selectedLeague) {
-    if (checkingLeagues || hasJoinedLeague === null) {
-      return <p className="page-message">Checking your leagues…</p>;
-    }
-
     return (
-      <div className="empty-state">
-        <strong>Join a league first.</strong>
-        <p>You are not in any leagues yet. Join or create one, then come back here to place bids.</p>
-        <button className="primary-button" onClick={onChooseLeague}>View leagues</button>
-      </div>
+      <LeagueSelectionGate
+        title={matchStatus === 'finished' ? 'Select a league for finished matches' : 'Select a league for upcoming matches'}
+        description={matchStatus === 'finished'
+          ? 'Finished match history is shown for the league you choose.'
+          : 'Bids will use coins from the league you choose here.'}
+        actionLabel={matchStatus === 'finished' ? 'View finished matches' : 'View upcoming matches'}
+        emptyDescription="Join or create a league, then come back here to place bids."
+        onLeagueSelected={onLeagueSelected}
+        onChooseLeague={onChooseLeague}
+      />
     );
   }
 
@@ -239,7 +201,10 @@ export function Dashboard({
           <p className="eyebrow">{isFinishedView ? 'Settled matches' : 'Match predictions'}</p>
           <h2>{isFinishedView ? `Finished in ${selectedLeague.name}` : selectedLeague.name}</h2>
         </div>
-        <button className="ghost-button dark" onClick={load}>Refresh</button>
+        <div className="section-actions">
+          <button className="ghost-button dark" type="button" onClick={onChangeLeague}>Change league</button>
+          <button className="ghost-button dark" type="button" onClick={load}>Refresh</button>
+        </div>
       </div>
 
       {matches.length === 0 ? (

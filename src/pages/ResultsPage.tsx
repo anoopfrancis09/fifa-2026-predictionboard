@@ -39,6 +39,7 @@ export function ResultsPage({ selectedLeague, onChooseLeague }: { selectedLeague
     const { data, error: matchesError } = await supabase
       .from('matches')
       .select('*')
+      .eq('league_id', selectedLeague.id)
       .eq('status', 'finished')
       .order('match_time', { ascending: false });
 

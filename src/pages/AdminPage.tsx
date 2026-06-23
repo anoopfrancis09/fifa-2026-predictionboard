@@ -2,7 +2,9 @@ import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { choiceLabel, formatDateTime, weightLabel } from '../lib/format';
-import type { BorrowRequestRow, Match, PredictionChoice } from '../types';
+import type { BorrowRequestRow, League, Match, PredictionChoice } from '../types';
+
+type AdminLeagueOption = Pick<League, 'id' | 'name' | 'is_private'>;
 
 function toLocalInputValue(date: Date) {
   const offset = date.getTimezoneOffset();
@@ -35,8 +37,10 @@ export function AdminPage() {
   const [drawWeight, setDrawWeight] = useState('2.00');
   const [teamBWeight, setTeamBWeight] = useState('2.00');
   const [matchTime, setMatchTime] = useState(defaultMatchTime());
+  const [selectedLeagueId, setSelectedLeagueId] = useState('');
   const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
+  const [leagues, setLeagues] = useState<AdminLeagueOption[]>([]);
   const [borrowRequests, setBorrowRequests] = useState<BorrowRequestRow[]>([]);
   const [resultByMatch, setResultByMatch] = useState<Record<string, PredictionChoice>>({});
   const [loading, setLoading] = useState(false);
@@ -44,21 +48,31 @@ export function AdminPage() {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const [{ data: matchesData, error: matchesError }, { data: borrowData, error: borrowError }] = await Promise.all([
+    const [
+      { data: matchesData, error: matchesError },
+      { data: borrowData, error: borrowError },
+      { data: leaguesData, error: leaguesError },
+    ] = await Promise.all([
       supabase
         .from('matches')
         .select('*')
         .order('match_time', { ascending: true }),
       supabase.rpc('get_coin_borrow_requests'),
+      supabase.rpc('get_admin_match_leagues'),
     ]);
 
-    if (matchesError || borrowError) {
-      setError(matchesError?.message ?? borrowError?.message ?? 'Could not load admin data.');
+    if (matchesError || borrowError || leaguesError) {
+      setError(matchesError?.message ?? borrowError?.message ?? leaguesError?.message ?? 'Could not load admin data.');
       return;
     }
 
+    const nextLeagues = (leaguesData ?? []) as AdminLeagueOption[];
     setMatches((matchesData ?? []) as Match[]);
     setBorrowRequests((borrowData ?? []) as BorrowRequestRow[]);
+    setLeagues(nextLeagues);
+    setSelectedLeagueId((currentLeagueId) => (
+      nextLeagues.some((league) => league.id === currentLeagueId) ? currentLeagueId : nextLeagues[0]?.id || ''
+    ));
   }, []);
 
   useEffect(() => {
@@ -85,6 +99,7 @@ export function AdminPage() {
     setDrawWeight(Number(match.draw_weight).toFixed(2));
     setTeamBWeight(Number(match.team_b_weight).toFixed(2));
     setMatchTime(toLocalInputValue(new Date(match.match_time)));
+    setSelectedLeagueId(match.league_id);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -96,6 +111,7 @@ export function AdminPage() {
 
     try {
       if (!profile || profile.role !== 'admin') throw new Error('Admin access required.');
+      if (!selectedLeagueId) throw new Error('Select a league for this match.');
       if (!teamA.trim() || !teamB.trim()) throw new Error('Enter both team names.');
       if (teamA.trim().toLowerCase() === teamB.trim().toLowerCase()) throw new Error('Team names must be different.');
 
@@ -109,6 +125,7 @@ export function AdminPage() {
       if (editingMatchId) {
         const { error: updateError } = await supabase.rpc('admin_update_match', {
           p_match_id: editingMatchId,
+          p_league_id: selectedLeagueId,
           p_team_a: teamA.trim(),
           p_team_b: teamB.trim(),
           p_team_a_weight: parsedTeamAWeight,
@@ -121,6 +138,7 @@ export function AdminPage() {
         setMessage('Match updated. Existing predictions will now use the updated teams/weights.');
       } else {
         const { error: insertError } = await supabase.from('matches').insert({
+          league_id: selectedLeagueId,
           team_a: teamA.trim(),
           team_b: teamB.trim(),
           team_a_weight: parsedTeamAWeight,
@@ -207,6 +225,10 @@ export function AdminPage() {
 
   const upcoming = matches.filter((match) => match.status === 'upcoming');
   const finished = matches.filter((match) => match.status === 'finished');
+  const leagueNameById = leagues.reduce<Record<string, string>>((acc, league) => {
+    acc[league.id] = league.name;
+    return acc;
+  }, {});
 
   return (
     <section className="admin-layout">
@@ -219,6 +241,18 @@ export function AdminPage() {
             You are editing an existing upcoming match. Existing user predictions will remain, but the updated team names, match time and weights will be used.
           </p>
         )}
+
+        <label className="field-label">
+          League
+          <select value={selectedLeagueId} onChange={(event) => setSelectedLeagueId(event.target.value)}>
+            <option value="">Select league</option>
+            {leagues.map((league) => (
+              <option key={league.id} value={league.id}>
+                {league.name}{league.is_private ? ' (Private)' : ''}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <label className="field-label">
           Team A
@@ -303,6 +337,7 @@ export function AdminPage() {
               <div className="admin-match-row" key={match.id}>
                 <div>
                   <strong>{match.team_a} vs {match.team_b}</strong>
+                  <span>League: {leagueNameById[match.league_id] ?? 'Unknown league'}</span>
                   <span>{formatDateTime(match.match_time)}</span>
                   <span className="weight-line">
                     {match.team_a}: {weightLabel(match.team_a_weight)} · Draw: {weightLabel(match.draw_weight)} · {match.team_b}: {weightLabel(match.team_b_weight)}
@@ -331,7 +366,11 @@ export function AdminPage() {
           <div className="finished-summary">
             <h3>Finished</h3>
             {finished.map((match) => (
-              <p key={match.id}>{match.team_a} vs {match.team_b}: <strong>{match.result && choiceLabel(match.result, match)}</strong></p>
+              <p key={match.id}>
+                {match.team_a} vs {match.team_b}
+                {' '}({leagueNameById[match.league_id] ?? 'Unknown league'}):{' '}
+                <strong>{match.result && choiceLabel(match.result, match)}</strong>
+              </p>
             ))}
           </div>
         )}

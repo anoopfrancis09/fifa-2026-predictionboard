@@ -120,6 +120,7 @@ export function Dashboard({
         supabase
           .from('matches')
           .select('*')
+          .eq('league_id', selectedLeague.id)
           .eq('status', matchStatus)
           .order('match_time', { ascending: matchStatus === 'upcoming' }),
         supabase

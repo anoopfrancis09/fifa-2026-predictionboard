@@ -12,6 +12,7 @@ export interface Profile {
 
 export interface Match {
   id: string;
+  league_id: string;
   team_a: string;
   team_b: string;
   team_a_weight: number;

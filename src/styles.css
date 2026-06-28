@@ -2025,6 +2025,55 @@ tbody tr:hover {
     color: #8892b0;
   }
 
+  .admin-wallet-table table {
+    min-width: 0;
+    background: transparent;
+  }
+
+  .admin-wallet-table tr {
+    color: #333333;
+    background: #ffffff;
+    border: 1px solid rgba(0, 217, 255, 0.24);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
+  }
+
+  .admin-wallet-table td {
+    color: #333333;
+    align-items: center;
+  }
+
+  .admin-wallet-table td::before {
+    flex: 0 0 auto;
+    color: #667085;
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .admin-wallet-table td:nth-child(1)::before {
+    content: "Player";
+  }
+
+  .admin-wallet-table td:nth-child(2)::before {
+    content: "League coins";
+  }
+
+  .admin-wallet-table td:nth-child(3)::before {
+    content: "Updated";
+  }
+
+  .admin-wallet-table td:nth-child(4)::before {
+    content: "Action";
+  }
+
+  .admin-wallet-table input {
+    width: min(150px, 52vw);
+    max-width: 150px;
+    color: #333333;
+    background: #ffffff;
+    border: 1px solid #d0d5dd;
+  }
+
   .me-row {
     background: rgba(0, 217, 255, 0.14);
     border-color: #00d9ff;

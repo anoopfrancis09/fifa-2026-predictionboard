@@ -2,7 +2,7 @@ import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { choiceLabel, formatDateTime, weightLabel } from '../lib/format';
-import type { BorrowRequestRow, League, Match, PredictionChoice } from '../types';
+import type { AdminLeagueWalletRow, BorrowRequestRow, League, Match, PredictionChoice } from '../types';
 
 type AdminLeagueOption = Pick<League, 'id' | 'name' | 'is_private'>;
 
@@ -38,14 +38,20 @@ export function AdminPage() {
   const [teamBWeight, setTeamBWeight] = useState('2.00');
   const [matchTime, setMatchTime] = useState(defaultMatchTime());
   const [selectedLeagueId, setSelectedLeagueId] = useState('');
+  const [selectedWalletLeagueId, setSelectedWalletLeagueId] = useState('');
   const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [leagues, setLeagues] = useState<AdminLeagueOption[]>([]);
+  const [leagueWallets, setLeagueWallets] = useState<AdminLeagueWalletRow[]>([]);
+  const [walletBalanceByUserId, setWalletBalanceByUserId] = useState<Record<string, string>>({});
   const [borrowRequests, setBorrowRequests] = useState<BorrowRequestRow[]>([]);
   const [resultByMatch, setResultByMatch] = useState<Record<string, PredictionChoice>>({});
   const [loading, setLoading] = useState(false);
+  const [savingWalletUserId, setSavingWalletUserId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [walletMessage, setWalletMessage] = useState<string | null>(null);
+  const [walletError, setWalletError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const [
@@ -73,11 +79,48 @@ export function AdminPage() {
     setSelectedLeagueId((currentLeagueId) => (
       nextLeagues.some((league) => league.id === currentLeagueId) ? currentLeagueId : nextLeagues[0]?.id || ''
     ));
+    setSelectedWalletLeagueId((currentLeagueId) => (
+      nextLeagues.some((league) => league.id === currentLeagueId) ? currentLeagueId : nextLeagues[0]?.id || ''
+    ));
+  }, []);
+
+  const loadLeagueWallets = useCallback(async (leagueId: string) => {
+    if (!leagueId) {
+      setLeagueWallets([]);
+      setWalletBalanceByUserId({});
+      return;
+    }
+
+    setWalletError(null);
+
+    const { data, error: walletsError } = await supabase.rpc('get_admin_league_wallets', {
+      p_league_id: leagueId,
+    });
+
+    if (walletsError) {
+      setWalletError(walletsError.message);
+      setLeagueWallets([]);
+      setWalletBalanceByUserId({});
+      return;
+    }
+
+    const rows = (data ?? []) as AdminLeagueWalletRow[];
+    setLeagueWallets(rows);
+    setWalletBalanceByUserId(rows.reduce<Record<string, string>>((acc, row) => {
+      acc[row.user_id] = Number(row.wallet_balance).toFixed(2);
+      return acc;
+    }, {}));
   }, []);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (profile?.role === 'admin') {
+      loadLeagueWallets(selectedWalletLeagueId);
+    }
+  }, [loadLeagueWallets, profile?.role, selectedWalletLeagueId]);
 
   function resetForm() {
     setTeamA('');
@@ -219,6 +262,42 @@ export function AdminPage() {
     }
   }
 
+  async function updateLeagueWallet(user: AdminLeagueWalletRow) {
+    if (!selectedWalletLeagueId) {
+      setWalletError('Select a tournament first.');
+      return;
+    }
+
+    const nextBalance = Number(walletBalanceByUserId[user.user_id]);
+    if (!Number.isFinite(nextBalance) || nextBalance < 0) {
+      setWalletError('Coins must be 0.00 or higher.');
+      return;
+    }
+
+    setSavingWalletUserId(user.user_id);
+    setWalletError(null);
+    setWalletMessage(null);
+
+    try {
+      if (!profile || profile.role !== 'admin') throw new Error('Admin access required.');
+
+      const { error: walletUpdateError } = await supabase.rpc('admin_update_league_wallet_balance', {
+        p_league_id: selectedWalletLeagueId,
+        p_user_id: user.user_id,
+        p_balance: Number(nextBalance.toFixed(2)),
+      });
+
+      if (walletUpdateError) throw walletUpdateError;
+
+      setWalletMessage(`${user.username}'s league coins were updated.`);
+      await loadLeagueWallets(selectedWalletLeagueId);
+    } catch (err) {
+      setWalletError(err instanceof Error ? err.message : 'Could not update league coins.');
+    } finally {
+      setSavingWalletUserId(null);
+    }
+  }
+
   if (profile?.role !== 'admin') {
     return <p className="warning-box">Admin access required.</p>;
   }
@@ -229,6 +308,7 @@ export function AdminPage() {
     acc[league.id] = league.name;
     return acc;
   }, {});
+  const selectedWalletLeagueName = leagueNameById[selectedWalletLeagueId] ?? 'selected tournament';
 
   return (
     <section className="admin-layout">
@@ -323,44 +403,135 @@ export function AdminPage() {
       <div className="panel-card wide">
         <div className="section-heading compact">
           <div>
-            <p className="eyebrow">Manage games</p>
-            <h2>Upcoming matches</h2>
+            <p className="eyebrow">League coins</p>
+            <h2>Adjust player wallets</h2>
           </div>
-          <button className="ghost-button dark" onClick={load}>Refresh</button>
+          <button className="ghost-button dark" type="button" onClick={() => loadLeagueWallets(selectedWalletLeagueId)}>Refresh</button>
         </div>
 
-        {upcoming.length === 0 ? (
-          <p className="muted-text">No upcoming matches.</p>
-        ) : (
-          <div className="admin-match-list">
-            {upcoming.map((match) => (
-              <div className="admin-match-row" key={match.id}>
-                <div>
-                  <strong>{match.team_a} vs {match.team_b}</strong>
-                  <span>League: {leagueNameById[match.league_id] ?? 'Unknown league'}</span>
-                  <span>{formatDateTime(match.match_time)}</span>
-                  <span className="weight-line">
-                    {match.team_a}: {weightLabel(match.team_a_weight)} · Draw: {weightLabel(match.draw_weight)} · {match.team_b}: {weightLabel(match.team_b_weight)}
-                  </span>
-                </div>
-                <select
-                  value={resultByMatch[match.id] ?? ''}
-                  onChange={(event) => setResultByMatch((prev) => ({ ...prev, [match.id]: event.target.value as PredictionChoice }))}
-                >
-                  <option value="">Select result</option>
-                  <option value="team_a">{match.team_a} win</option>
-                  <option value="draw">Draw</option>
-                  <option value="team_b">{match.team_b} win</option>
-                </select>
-                <div className="admin-actions">
-                  <button className="ghost-button dark" type="button" onClick={() => startEdit(match)} disabled={loading}>Edit</button>
-                  <button className="danger-button" type="button" onClick={() => deleteMatch(match)} disabled={loading}>Delete</button>
-                  <button className="primary-button" type="button" onClick={() => finishMatch(match)} disabled={loading}>Mark finished</button>
-                </div>
-              </div>
+        <label className="field-label admin-wallet-selector">
+          Tournament
+          <select
+            value={selectedWalletLeagueId}
+            onChange={(event) => {
+              setSelectedWalletLeagueId(event.target.value);
+              setWalletMessage(null);
+              setWalletError(null);
+            }}
+          >
+            <option value="">Select tournament</option>
+            {leagues.map((league) => (
+              <option key={league.id} value={league.id}>
+                {league.name}{league.is_private ? ' (Private)' : ''}
+              </option>
             ))}
+          </select>
+        </label>
+
+        <p className="muted-text small-note">
+          Changes here update only the league coins wallet for {selectedWalletLeagueName}.
+        </p>
+
+        {walletMessage && <p className="success-text">{walletMessage}</p>}
+        {walletError && <p className="error-text">{walletError}</p>}
+
+        {!selectedWalletLeagueId ? (
+          <p className="muted-text">Select a tournament to edit player coins.</p>
+        ) : leagueWallets.length === 0 ? (
+          <p className="muted-text">No players are in this tournament yet.</p>
+        ) : (
+          <div className="table-wrap admin-wallet-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Player</th>
+                  <th>League coins</th>
+                  <th>Last updated</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leagueWallets.map((user) => {
+                  const balanceValue = walletBalanceByUserId[user.user_id] ?? '';
+                  const parsedBalance = Number(balanceValue);
+                  const unchanged = Number.isFinite(parsedBalance) && Number(parsedBalance.toFixed(2)) === Number(user.wallet_balance);
+                  return (
+                    <tr key={user.user_id}>
+                      <td>{user.username}</td>
+                      <td>
+                        <input
+                          aria-label={`${user.username} league coins`}
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={balanceValue}
+                          onChange={(event) => setWalletBalanceByUserId((prev) => ({
+                            ...prev,
+                            [user.user_id]: event.target.value,
+                          }))}
+                        />
+                      </td>
+                      <td>{formatDateTime(user.updated_at)}</td>
+                      <td>
+                        <button
+                          className="primary-button"
+                          type="button"
+                          disabled={savingWalletUserId === user.user_id || unchanged}
+                          onClick={() => updateLeagueWallet(user)}
+                        >
+                          Update
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
+
+        <div className="finished-summary">
+          <div className="section-heading compact">
+            <div>
+              <p className="eyebrow">Manage games</p>
+              <h2>Upcoming matches</h2>
+            </div>
+            <button className="ghost-button dark" type="button" onClick={load}>Refresh</button>
+          </div>
+
+          {upcoming.length === 0 ? (
+            <p className="muted-text">No upcoming matches.</p>
+          ) : (
+            <div className="admin-match-list">
+              {upcoming.map((match) => (
+                <div className="admin-match-row" key={match.id}>
+                  <div>
+                    <strong>{match.team_a} vs {match.team_b}</strong>
+                    <span>League: {leagueNameById[match.league_id] ?? 'Unknown league'}</span>
+                    <span>{formatDateTime(match.match_time)}</span>
+                    <span className="weight-line">
+                      {match.team_a}: {weightLabel(match.team_a_weight)} · Draw: {weightLabel(match.draw_weight)} · {match.team_b}: {weightLabel(match.team_b_weight)}
+                    </span>
+                  </div>
+                  <select
+                    value={resultByMatch[match.id] ?? ''}
+                    onChange={(event) => setResultByMatch((prev) => ({ ...prev, [match.id]: event.target.value as PredictionChoice }))}
+                  >
+                    <option value="">Select result</option>
+                    <option value="team_a">{match.team_a} win</option>
+                    <option value="draw">Draw</option>
+                    <option value="team_b">{match.team_b} win</option>
+                  </select>
+                  <div className="admin-actions">
+                    <button className="ghost-button dark" type="button" onClick={() => startEdit(match)} disabled={loading}>Edit</button>
+                    <button className="danger-button" type="button" onClick={() => deleteMatch(match)} disabled={loading}>Delete</button>
+                    <button className="primary-button" type="button" onClick={() => finishMatch(match)} disabled={loading}>Mark finished</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {finished.length > 0 && (
           <div className="finished-summary">

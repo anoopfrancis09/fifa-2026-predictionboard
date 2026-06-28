@@ -103,6 +103,13 @@ export interface BorrowUser {
   wallet_balance: number;
 }
 
+export interface AdminLeagueWalletRow {
+  user_id: string;
+  username: string;
+  wallet_balance: number;
+  updated_at: string;
+}
+
 export type BorrowRequestStatus = 'pending' | 'completed' | 'declined';
 
 export interface BorrowRequestRow {
